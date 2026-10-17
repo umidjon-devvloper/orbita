@@ -895,7 +895,8 @@ model EvidenceAttachment {
   evidence Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
 }
 
-/// Links one evidence item to one criterion of one assessment. Unique (evidenceId, periodId) = no double counting.
+/// Links one CONTRIBUTION evidence item (training, mentoring, improvement…) to one criterion. Unique (evidenceId, periodId) = counted once.
+/// RECORD evidence (service records, sales, feedback) is never allocated; metric criteria read it, and rubric validation forbids two criteria reading the same field.
 model EvidenceAllocation {
   id           String @id @default(uuid(7)) @db.Uuid
   evidenceId   String @db.Uuid

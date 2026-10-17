@@ -5,18 +5,18 @@ Source of truth for the model: [`schema.draft.prisma`](./schema.draft.prisma) �
 
 ## 1. Conventions
 
-| Topic | Rule |
-|---|---|
-| IDs | UUIDv7 (`@default(uuid(7))`, `uuid` column) — sortable by time, safe to expose |
-| Tenancy | Every root entity has `orgId`; all queries filter by the user's org. Single-org deployment in MVP, multi-org-ready. |
-| Scores | **Integer hundredths** `0–10000` (`74.90` → `7490`). Exact integer math, no `Decimal` arithmetic in JS. Displayed with 2 decimals. |
-| Weights | Integer basis points; active criteria of a rubric version sum to `10000`. |
-| Money | `BIGINT` whole UZS. JSON transport as strings. Currency column kept for future multi-currency (`UZS` only in MVP). |
-| Dates | `timestamptz` for events; `date` for business dates (periods, hire date, evidence date) interpreted in `Asia/Tashkent`. |
-| Localized config text | `Json` `{ "uz": "...", "ru": "...", "en": "..." }`, `uz` required; fallback chain `requested → uz`. User-generated content (feedback, evidence text) is plain `text` and never translated. |
-| Demo data | `isDemo` on every seedable table; `db:seed:clear-demo` deletes by flag; UI banner when any demo row exists. |
-| Approval of illustrative config | `approval = UNAPPROVED` on levels, salary bands, reward policies until the owner approves. UI shows a badge. |
-| Soft delete | Not used. Config entities are deactivated with `isActive=false`; history entities are never deleted (retention job anonymizes). |
+| Topic                           | Rule                                                                                                                                                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| IDs                             | UUIDv7 (`@default(uuid(7))`, `uuid` column) — sortable by time, safe to expose                                                                                                             |
+| Tenancy                         | Every root entity has `orgId`; all queries filter by the user's org. Single-org deployment in MVP, multi-org-ready.                                                                        |
+| Scores                          | **Integer hundredths** `0–10000` (`74.90` → `7490`). Exact integer math, no `Decimal` arithmetic in JS. Displayed with 2 decimals.                                                         |
+| Weights                         | Integer basis points; active criteria of a rubric version sum to `10000`.                                                                                                                  |
+| Money                           | `BIGINT` whole UZS. JSON transport as strings. Currency column kept for future multi-currency (`UZS` only in MVP).                                                                         |
+| Dates                           | `timestamptz` for events; `date` for business dates (periods, hire date, evidence date) interpreted in `Asia/Tashkent`.                                                                    |
+| Localized config text           | `Json` `{ "uz": "...", "ru": "...", "en": "..." }`, `uz` required; fallback chain `requested → uz`. User-generated content (feedback, evidence text) is plain `text` and never translated. |
+| Demo data                       | `isDemo` on every seedable table; `db:seed:clear-demo` deletes by flag; UI banner when any demo row exists.                                                                                |
+| Approval of illustrative config | `approval = UNAPPROVED` on levels, salary bands, reward policies until the owner approves. UI shows a badge.                                                                               |
+| Soft delete                     | Not used. Config entities are deactivated with `isActive=false`; history entities are never deleted (retention job anonymizes).                                                            |
 
 > **Decision (deviation from v2 prompt):** v2 said "Decimal(5,2)" for scores. Integer hundredths give the same precision with simpler, exact arithmetic in TypeScript and identical values in SQL. Logged in DECISIONS.md D-07.
 
@@ -50,7 +50,7 @@ erDiagram
   Assessment ||--o{ CriterionResult : results
   Assessment ||--o| AssessmentInvite : "candidate link"
   Assessment ||--o{ CandidateResponse : answers
-  Evidence ||--o{ EvidenceAllocation : "allocated (max 1 per period)"
+  Evidence ||--o{ EvidenceAllocation : "contribution evidence: max 1 per period"
   EvidenceAllocation }o--|| RubricCriterion : to
   Assessment ||--o{ Appeal : appealed
   Employee ||--o{ PromotionRecommendation : ""
@@ -63,19 +63,19 @@ erDiagram
 
 ## 3. Tables by module
 
-| Module | Tables | Notes |
-|---|---|---|
-| Identity | Organization, OrgUnit, User, Role, RolePermission, RoleAssignment, Session, PasswordResetToken | OrgUnit uses materialized `path` for subtree scope checks (`path LIKE '/root/unit/%'`). |
-| Catalog | Specialty, Position, Competency, PositionCompetency | Competencies are org-wide and reused across specialties. |
-| Framework | CareerLevel, LevelRequirement, SalaryBand | Requirements are per (level, specialty, competency); `isGate` marks must-pass. |
-| Rubrics | Rubric, RubricVersion, RubricCriterion, AssessmentQuestion | One rubric per (specialty, purpose); versions immutable once locked. |
-| People | Employee, Candidate | Both carry a stable `pseudonym` used for AI and exports. |
-| Assessment | PerformancePeriod, Assessment, AssessmentInvite, CandidateResponse, CriterionResult | One `Assessment` table for three kinds; subject columns validated by CHECK. |
-| Evidence | Evidence, EvidenceAttachment, EvidenceAllocation | Learning and mentoring are evidence types, not separate tables (one concept: verifiable activity). |
-| Decisions | Appeal, PromotionRecommendation, CareerLevelHistory, HiringDecision, CompensationRecommendation, DevelopmentItem | Each decision row stores who, when, and the domain snapshot it was based on. |
-| Rewards | RewardPolicy, RewardBudget, RewardRecommendation | Policy tied to specialty + rubric version = the comparison cohort. |
-| Platform | Notification, AuditEvent, AiRun, ReferenceDocument | AuditEvent append-only. |
-| Integration | CrmConnection, ExternalMapping, ImportBatch, Job | Credentials never stored in DB. |
+| Module      | Tables                                                                                                           | Notes                                                                                              |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Identity    | Organization, OrgUnit, User, Role, RolePermission, RoleAssignment, Session, PasswordResetToken                   | OrgUnit uses materialized `path` for subtree scope checks (`path LIKE '/root/unit/%'`).            |
+| Catalog     | Specialty, Position, Competency, PositionCompetency                                                              | Competencies are org-wide and reused across specialties.                                           |
+| Framework   | CareerLevel, LevelRequirement, SalaryBand                                                                        | Requirements are per (level, specialty, competency); `isGate` marks must-pass.                     |
+| Rubrics     | Rubric, RubricVersion, RubricCriterion, AssessmentQuestion                                                       | One rubric per (specialty, purpose); versions immutable once locked.                               |
+| People      | Employee, Candidate                                                                                              | Both carry a stable `pseudonym` used for AI and exports.                                           |
+| Assessment  | PerformancePeriod, Assessment, AssessmentInvite, CandidateResponse, CriterionResult                              | One `Assessment` table for three kinds; subject columns validated by CHECK.                        |
+| Evidence    | Evidence, EvidenceAttachment, EvidenceAllocation                                                                 | Learning and mentoring are evidence types, not separate tables (one concept: verifiable activity). |
+| Decisions   | Appeal, PromotionRecommendation, CareerLevelHistory, HiringDecision, CompensationRecommendation, DevelopmentItem | Each decision row stores who, when, and the domain snapshot it was based on.                       |
+| Rewards     | RewardPolicy, RewardBudget, RewardRecommendation                                                                 | Policy tied to specialty + rubric version = the comparison cohort.                                 |
+| Platform    | Notification, AuditEvent, AiRun, ReferenceDocument                                                               | AuditEvent append-only.                                                                            |
+| Integration | CrmConnection, ExternalMapping, ImportBatch, Job                                                                 | Credentials never stored in DB.                                                                    |
 
 ## 4. Constraints Prisma cannot express (raw SQL in migrations)
 
@@ -146,17 +146,17 @@ The application role `orbita_app` owns no DDL rights; migrations run as `orbita_
 
 ## 5. Uniqueness and idempotency keys
 
-| Rule | Constraint |
-|---|---|
-| No duplicate evidence from import/CRM | `Evidence @@unique([orgId, source, externalId])` + CHECK external id required for non-manual |
-| One evidence → one criterion per period | `EvidenceAllocation @@unique([evidenceId, periodId])` |
-| No duplicate reward | `RewardRecommendation @@unique([employeeId, periodId, policyId])` |
-| One budget per policy per period | `RewardBudget @@unique([policyId, periodId])` |
-| CRM record mapped once | `ExternalMapping @@unique([connectionId, entityType, externalId])` |
-| One answer per question | `CandidateResponse @@unique([assessmentId, questionId])` |
-| One result per criterion | `CriterionResult @@unique([assessmentId, criterionId])` |
-| Jobs not enqueued twice | `Job.idempotencyKey @unique` |
-| Candidate hired once | `Employee.fromCandidateId @unique` |
+| Rule                                             | Constraint                                                                                                |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| No duplicate evidence from import/CRM            | `Evidence @@unique([orgId, source, externalId])` + CHECK external id required for non-manual              |
+| Contribution evidence → one criterion per period | `EvidenceAllocation @@unique([evidenceId, periodId])` + trigger: only CONTRIBUTION types may be allocated |
+| No duplicate reward                              | `RewardRecommendation @@unique([employeeId, periodId, policyId])`                                         |
+| One budget per policy per period                 | `RewardBudget @@unique([policyId, periodId])`                                                             |
+| CRM record mapped once                           | `ExternalMapping @@unique([connectionId, entityType, externalId])`                                        |
+| One answer per question                          | `CandidateResponse @@unique([assessmentId, questionId])`                                                  |
+| One result per criterion                         | `CriterionResult @@unique([assessmentId, criterionId])`                                                   |
+| Jobs not enqueued twice                          | `Job.idempotencyKey @unique`                                                                              |
+| Candidate hired once                             | `Employee.fromCandidateId @unique`                                                                        |
 
 ## 6. Deletion behaviour
 
@@ -167,17 +167,17 @@ The application role `orbita_app` owns no DDL rights; migrations run as `orbita_
 
 ## 7. Indexes (beyond PK/unique)
 
-| Query | Index |
-|---|---|
+| Query                                    | Index                                                                  |
+| ---------------------------------------- | ---------------------------------------------------------------------- |
 | Verification queue for a manager's units | `Evidence(orgId, status)` + join on Employee(orgId, orgUnitId, status) |
-| Employee evidence per period | `Evidence(employeeId, periodId, status)` |
-| Ranking cohort | `Assessment(periodId, rubricVersionId, status)` |
-| Review queue | `Assessment(orgId, kind, status)` |
-| Audit timeline of an entity | `AuditEvent(orgId, entityType, entityId, createdAt)` |
-| Unread notifications | `Notification(userId, readAt, createdAt)` |
-| Job polling | `Job(status, runAt)` |
-| Scope checks | `OrgUnit(orgId, path)` (text_pattern_ops in raw SQL) |
-| Retention sweep | `Candidate(retentionUntil)`, `Session(absExpires)` |
+| Employee evidence per period             | `Evidence(employeeId, periodId, status)`                               |
+| Ranking cohort                           | `Assessment(periodId, rubricVersionId, status)`                        |
+| Review queue                             | `Assessment(orgId, kind, status)`                                      |
+| Audit timeline of an entity              | `AuditEvent(orgId, entityType, entityId, createdAt)`                   |
+| Unread notifications                     | `Notification(userId, readAt, createdAt)`                              |
+| Job polling                              | `Job(status, runAt)`                                                   |
+| Scope checks                             | `OrgUnit(orgId, path)` (text_pattern_ops in raw SQL)                   |
+| Retention sweep                          | `Candidate(retentionUntil)`, `Session(absExpires)`                     |
 
 ## 8. Snapshots for reproducibility
 

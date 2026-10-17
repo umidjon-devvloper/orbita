@@ -16,7 +16,7 @@ One line each: ID · date · decision — reason.
 - D-12 · 2026-10-18 · Promotion eligibility uses LEVEL_REVIEW assessments; monthly performance is context only — keeps "level" and "monthly result" separate as required.
 - D-13 · 2026-10-18 · Level requirements cumulative up to target level; failed checks never lower a current level.
 - D-14 · 2026-10-18 · Learning and mentoring modelled as evidence types, not separate tables — same lifecycle (submit, verify, allocate).
-- D-15 · 2026-10-18 · `EvidenceAllocation` unique (evidenceId, periodId) enforces "count once" at DB level.
+- D-15 · 2026-10-18 · `EvidenceAllocation` unique (evidenceId, periodId) enforces "count once" at DB level — for CONTRIBUTION evidence (see D-27).
 - D-16 · 2026-10-18 · `governmentFee` is not a selectable measure field in metric configs — revenue misuse impossible by construction.
 - D-17 · 2026-10-18 · Ranking = competition ranking (1,2,2,4), cohort = specialty + rubric version + period, min cohort 3.
 - D-18 · 2026-10-18 · Reward pool per policy, policy bound to specialty + rubric version — no cross-specialty comparisons; capped remainder not redistributed by default (flag).
@@ -28,3 +28,9 @@ One line each: ID · date · decision — reason.
 - D-24 · 2026-10-18 · Background jobs on a Postgres table with `SKIP LOCKED` — no Redis needed for MVP volume.
 - D-25 · 2026-10-18 · AI provider defaults to Mock until legal answers Q20; pseudonyms + PII scrubber on every AI input.
 - D-26 · 2026-10-18 · Audit table append-only via DB privileges; separate migrator and app DB roles.
+- D-27 · 2026-10-18 · Evidence split into RECORD (SERVICE_RECORD, SALE, CUSTOMER_FEEDBACK) and CONTRIBUTION (all others). One service record legitimately feeds quality (errorFree) and volume (tier); double counting is prevented by forbidding two criteria from reading the same type.field, while contributions are allocated to exactly one criterion per period. Found while implementing EX1 — the Phase 1 rule "one evidence → one criterion" contradicted EX1.
+- D-28 · 2026-10-18 · TypeScript pinned to 6.0.x: TS 7.0 (npm latest) is not yet supported by typescript-eslint (peer < 6.1).
+- D-29 · 2026-10-18 · ESLint enforces domain purity: no Node I/O, framework or app imports, no Math.round/floor/ceil or parseFloat in packages/domain.
+- D-30 · 2026-10-18 · Coverage threshold 100 % (lines, branches, functions) on packages/domain; impossible branches are removed by restructuring, not suppressed.
+- D-31 · 2026-10-18 · Level requirements: gate = blocks; non-gate = advisory shortfall shown to the approver. Promotion blockers: minApprovedAssessments (default 1) and minMonthsAtPrevious (default 0).
+- D-32 · 2026-10-18 · Full local check is `pnpm run verify` (lint, format, typecheck, tests + coverage); `pnpm ci` is a reserved pnpm command.

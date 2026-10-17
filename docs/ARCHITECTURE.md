@@ -65,6 +65,7 @@ src/
 Each module: `routes.ts` (HTTP + Zod schemas from contracts) → `service.ts` (transaction, authorization checks, domain calls) → `repo.ts` (Prisma queries). No module reads another module's tables directly; it calls that module's service.
 
 ### Conventions
+
 - Base path `/api/v1`. JSON only. IDs are UUIDv7 strings.
 - Errors: RFC 9457 `application/problem+json` with `code` (stable machine key, also the i18n key), `title`, `status`, `errors[]` for field errors. No stack traces outside dev.
 - Pagination: cursor-based `?cursor=&limit=` (max 100) for lists; total counts only where cheap.
@@ -112,6 +113,7 @@ workflow/     state machines: assessment, evidence, promotion, reward, appeal
 authz/        can()
 money/        UZS integer helpers, roundToStep()
 ```
+
 All functions are pure and total: invalid input returns a typed `Result<T, DomainError>` instead of throwing.
 
 ## 8. AI layer
@@ -121,6 +123,7 @@ interface AiProvider {
   generate<T>(req: { purpose: AiPurpose; promptVersion: string; input: unknown; schema: ZodSchema<T>; locale: Locale }): Promise<AiResult<T>>;
 }
 ```
+
 - `MockProvider` (default in dev/test, deterministic fixtures), `AnthropicProvider` (server-side key, model id from env).
 - Pipeline: build pseudonymized input → render versioned prompt from `modules/ai/prompts/<purpose>/<version>.md` → call provider with timeout (30 s) → parse JSON → validate with Zod → store `AiRun` → return. Invalid output = `AiRun.status = INVALID_OUTPUT`, never partially used.
 - AI runs are triggered as jobs; UI polls run status. Retry: max 2 automatic retries on transient errors, then manual retry button.
@@ -140,6 +143,7 @@ interface CrmAdapter {
   listServiceRecords(since: Date, cursor?): Promise<Page<CrmServiceRecord>>;
 }
 ```
+
 - `CrmStaff`, `CrmServiceRecord` are **internal** shapes. A per-provider mapper converts provider payloads to them — CRM field names never leak past the adapter.
 - `ExternalMapping(connectionId, entityType, externalId) → internalId` guarantees idempotency; evidence uses `(orgId, source=CRM, externalId)` unique.
 - Only `MockCrmAdapter` exists in MVP. `CrmConnection.status` = `NOT_CONFIGURED` until real docs/credentials exist.
@@ -158,11 +162,11 @@ pino JSON logs with `requestId`, `userId` (UUID only), route, latency; no emails
 
 ## 14. Testing strategy
 
-| Layer | Tool | What |
-|---|---|---|
-| domain | Vitest | every rule + worked examples from SCORING_MODEL.md (table-driven) |
-| api | Vitest + real Postgres (docker) | routes, permissions matrix, transactions, audit, idempotency |
-| web | Vitest + Testing Library | critical components, i18n key completeness |
-| e2e | Playwright | 12 journeys from the original brief + theme/locale/mobile smoke + axe |
+| Layer  | Tool                            | What                                                                  |
+| ------ | ------------------------------- | --------------------------------------------------------------------- |
+| domain | Vitest                          | every rule + worked examples from SCORING_MODEL.md (table-driven)     |
+| api    | Vitest + real Postgres (docker) | routes, permissions matrix, transactions, audit, idempotency          |
+| web    | Vitest + Testing Library        | critical components, i18n key completeness                            |
+| e2e    | Playwright                      | 12 journeys from the original brief + theme/locale/mobile smoke + axe |
 
 CI order: `lint → typecheck → prisma validate → unit → integration → e2e`.
