@@ -1,0 +1,29 @@
+{
+  "name": "@orbita/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:wasm:deploy": "node scripts/schema-engine-wasm.mjs deploy",
+    "db:wasm:create": "node scripts/schema-engine-wasm.mjs create",
+    "db:wasm:check": "node scripts/schema-engine-wasm.mjs check"
+  },
+  "devDependencies": {
+    "@orbita/domain": "workspace:*",
+    "@prisma/driver-adapter-utils": "~7.10.1",
+    "@prisma/schema-engine-wasm": "8.1.0-1.d1b3f377ca835d73fd50954a5e22128b9ebdd6b8",
+    "@types/pg": "^8.23.1",
+    "prisma": "~7.10.1"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "~7.10.1",
+    "@prisma/client": "~7.10.1",
+    "dotenv": "^18.0.8",
+    "pg": "^8.23.1"
+  }
+}

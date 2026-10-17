@@ -1,0 +1,1275 @@
+// Orbita — Prisma schema. Constraints Prisma cannot express live in the raw SQL migration (docs/DATABASE_DESIGN.md §4).
+// and are added by raw SQL migrations.
+
+// Prisma 7: connection URL lives in prisma.config.ts; runtime uses @prisma/adapter-pg.
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // citext extension is created by the first raw SQL migration
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum Locale {
+  uz
+  ru
+  en
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum GrantScope {
+  OWN
+  ORG_UNIT
+  ORG
+}
+
+enum EmploymentStatus {
+  ACTIVE
+  ON_LEAVE
+  TERMINATED
+}
+
+enum CandidateStatus {
+  NEW
+  INVITED
+  ASSESSING
+  REVIEW
+  DECIDED
+  WITHDRAWN
+}
+
+enum ApprovalState {
+  UNAPPROVED // seeded / illustrative values; shown with a badge
+  APPROVED
+}
+
+enum RubricPurpose {
+  CANDIDATE
+  PERFORMANCE
+  LEVEL_REVIEW
+}
+
+enum RubricVersionStatus {
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+enum ScoringMethod {
+  AUTO_QUIZ // computed from multiple-choice answers
+  MANUAL // human score (AI may suggest)
+  EVIDENCE_METRIC // computed from verified evidence by a metric config
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SHORT_TEXT
+  PRACTICAL
+  SCENARIO
+  ERROR_IDENTIFICATION
+  INTERVIEW_NOTE
+}
+
+enum ContentSource {
+  HUMAN
+  AI_DRAFT
+}
+
+enum QuestionStatus {
+  DRAFT
+  APPROVED
+  ARCHIVED
+}
+
+enum PeriodStatus {
+  OPEN
+  CLOSED // no new evidence; assessments being finalized
+  FINALIZED // rankings & rewards computed
+}
+
+enum AssessmentKind {
+  CANDIDATE
+  PERFORMANCE
+  LEVEL_REVIEW
+}
+
+enum AssessmentStatus {
+  DRAFT
+  IN_PROGRESS
+  SUBMITTED
+  AI_ANALYZED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  APPEALED
+  REASSESSED
+}
+
+enum EvidenceType {
+  SERVICE_RECORD
+  SALE
+  CUSTOMER_FEEDBACK
+  TRAINING
+  MENTORING
+  PROCESS_IMPROVEMENT
+  NEW_CUSTOMER
+  WORK_SAMPLE
+  OTHER
+}
+
+enum EvidenceSource {
+  MANUAL
+  CSV_IMPORT
+  CRM
+}
+
+enum EvidenceStatus {
+  SUBMITTED
+  VERIFIED
+  REJECTED
+}
+
+enum AppealStatus {
+  OPEN
+  UNDER_REVIEW
+  UPHELD // original result stands
+  ACCEPTED // reassessment created
+}
+
+enum PromotionStatus {
+  RECOMMENDED
+  APPROVED
+  REJECTED
+}
+
+enum HiringDecisionType {
+  HIRE
+  REJECT
+  HOLD
+}
+
+enum RecommendationSubject {
+  CANDIDATE
+  EMPLOYEE
+}
+
+enum CompensationStatus {
+  PROPOSED
+  APPROVED
+  REJECTED
+}
+
+enum DevelopmentItemStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum RewardKind {
+  CASH
+  RECOGNITION
+}
+
+enum RewardStatus {
+  PROPOSED
+  APPROVED
+  PAID
+  CANCELLED
+}
+
+enum AiRunStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  INVALID_OUTPUT
+}
+
+enum CrmStatus {
+  NOT_CONFIGURED
+  DEMO
+  CONNECTED
+  SYNC_ERROR
+  DISABLED
+}
+
+enum ImportType {
+  EMPLOYEES
+  SERVICE_RECORDS
+}
+
+enum ImportStatus {
+  VALIDATED
+  APPLIED
+  FAILED
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  DEAD
+}
+
+// ─────────────────────── Organization & identity ───────────────────────
+
+model Organization {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  name          String
+  defaultLocale Locale   @default(uz)
+  currency      String   @default("UZS") @db.Char(3)
+  timezone      String   @default("Asia/Tashkent")
+  /// Validated by contracts/OrgSettings: appeal window, min cohort, SoD rules, candidate result policy, rounding step…
+  settings      Json     @default("{}")
+  isDemo        Boolean  @default(false)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+
+  orgUnits     OrgUnit[]
+  users        User[]
+  roles        Role[]
+  employees    Employee[]
+  candidates   Candidate[]
+  specialties  Specialty[]
+  competencies Competency[]
+  levels       CareerLevel[]
+  periods      PerformancePeriod[]
+  evidence     Evidence[]
+  rewardPolicy RewardPolicy[]
+  auditEvents  AuditEvent[]
+  crm          CrmConnection[]
+  imports      ImportBatch[]
+  references   ReferenceDocument[]
+}
+
+model OrgUnit {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  orgId     String   @db.Uuid
+  parentId  String?  @db.Uuid
+  name      String
+  /// Materialized path of ancestor ids, e.g. "/root-id/child-id/" — for subtree scope checks.
+  path      String
+  isDemo    Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  org         Organization     @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  parent      OrgUnit?         @relation("OrgUnitTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children    OrgUnit[]        @relation("OrgUnitTree")
+  employees   Employee[]
+  assignments RoleAssignment[]
+
+  @@unique([orgId, parentId, name])
+  @@index([orgId, path])
+}
+
+model User {
+  id           String          @id @default(uuid(7)) @db.Uuid
+  orgId        String          @db.Uuid
+  email        String          @db.Citext
+  passwordHash String?
+  status       UserStatus      @default(ACTIVE)
+  locale       Locale          @default(uz)
+  theme        ThemePreference @default(SYSTEM)
+  lastLoginAt  DateTime? @db.Timestamptz(3)
+  failedLogins Int             @default(0)
+  lockedUntil  DateTime? @db.Timestamptz(3)
+  isDemo       Boolean         @default(false)
+  createdAt    DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime        @updatedAt @db.Timestamptz(3)
+
+  org           Organization         @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  employee      Employee?
+  sessions      Session[]
+  resetTokens   PasswordResetToken[]
+  assignments   RoleAssignment[]     @relation("AssignmentUser")
+  grantedRoles  RoleAssignment[]     @relation("AssignmentGrantedBy")
+  notifications Notification[]
+  auditEvents   AuditEvent[]
+
+  evidenceSubmitted   Evidence[]                   @relation("EvidenceSubmittedBy")
+  evidenceVerified    Evidence[]                   @relation("EvidenceVerifiedBy")
+  assessmentsAssessed Assessment[]                 @relation("AssessmentEvaluator")
+  assessmentsApproved Assessment[]                 @relation("AssessmentApprover")
+  criterionScored     CriterionResult[]
+  appealsResolved     Appeal[]
+  promotionsMade      PromotionRecommendation[]    @relation("PromotionRecommender")
+  promotionsDecided   PromotionRecommendation[]    @relation("PromotionDecider")
+  hiringDecisions     HiringDecision[]
+  compProposed        CompensationRecommendation[] @relation("CompProposer")
+  compDecided         CompensationRecommendation[] @relation("CompDecider")
+  rewardsApproved     RewardRecommendation[]       @relation("RewardApprover")
+  rewardsPaidMarked   RewardRecommendation[]       @relation("RewardPaidMarker")
+  rubricVersions      RubricVersion[]              @relation("RubricVersionCreator")
+  questionsApproved   AssessmentQuestion[]
+  invitesCreated      AssessmentInvite[]
+  aiRuns              AiRun[]
+  imports             ImportBatch[]
+
+  @@unique([orgId, email])
+}
+
+model Role {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  orgId     String   @db.Uuid
+  key       String
+  /// { uz, ru?, en? }
+  name      Json
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  org         Organization     @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  permissions RolePermission[]
+  assignments RoleAssignment[]
+
+  @@unique([orgId, key])
+}
+
+model RolePermission {
+  roleId     String     @db.Uuid
+  permission String
+  scope      GrantScope
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permission])
+}
+
+model RoleAssignment {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  userId      String   @db.Uuid
+  roleId      String   @db.Uuid
+  /// Required when any permission of the role has ORG_UNIT scope.
+  orgUnitId   String?  @db.Uuid
+  grantedById String?  @db.Uuid
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  user      User     @relation("AssignmentUser", fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  orgUnit   OrgUnit? @relation(fields: [orgUnitId], references: [id], onDelete: Restrict)
+  grantedBy User?    @relation("AssignmentGrantedBy", fields: [grantedById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, roleId, orgUnitId])
+}
+
+model Session {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  userId      String   @db.Uuid
+  tokenHash   String   @unique
+  csrfToken   String
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  lastSeenAt  DateTime @default(now()) @db.Timestamptz(3)
+  idleExpires DateTime @db.Timestamptz(3)
+  absExpires  DateTime @db.Timestamptz(3)
+  ip          String?
+  userAgent   String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([absExpires])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime @db.Timestamptz(3)
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ───────────────────────── Catalog & framework ─────────────────────────
+
+model Specialty {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  orgId       String   @db.Uuid
+  key         String
+  name        Json
+  description Json?
+  isActive    Boolean  @default(true)
+  isDemo      Boolean  @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  org          Organization       @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  positions    Position[]
+  rubrics      Rubric[]
+  requirements LevelRequirement[]
+  rewardPolicy RewardPolicy[]
+
+  @@unique([orgId, key])
+}
+
+model Position {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  specialtyId String   @db.Uuid
+  key         String
+  title       Json
+  isActive    Boolean  @default(true)
+  isDemo      Boolean  @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  specialty    Specialty                    @relation(fields: [specialtyId], references: [id], onDelete: Restrict)
+  competencies PositionCompetency[]
+  salaryBands  SalaryBand[]
+  employees    Employee[]
+  candidates   Candidate[]
+  compRecs     CompensationRecommendation[]
+
+  @@unique([specialtyId, key])
+}
+
+model Competency {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  orgId       String   @db.Uuid
+  key         String
+  name        Json
+  description Json?
+  isActive    Boolean  @default(true)
+  isDemo      Boolean  @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  org          Organization         @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  positions    PositionCompetency[]
+  requirements LevelRequirement[]
+  criteria     RubricCriterion[]
+  development  DevelopmentItem[]
+
+  @@unique([orgId, key])
+}
+
+model PositionCompetency {
+  positionId   String @db.Uuid
+  competencyId String @db.Uuid
+  /// 1 (nice to have) … 3 (critical)
+  importance   Int    @db.SmallInt
+
+  position   Position   @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  competency Competency @relation(fields: [competencyId], references: [id], onDelete: Restrict)
+
+  @@id([positionId, competencyId])
+}
+
+model CareerLevel {
+  id                String        @id @default(uuid(7)) @db.Uuid
+  orgId             String        @db.Uuid
+  key               String
+  /// Display order; unique among active levels (partial index, see DATABASE_DESIGN §4).
+  rank              Int           @db.SmallInt
+  name              Json
+  description       Json?
+  /// Narrative expectations: autonomy, complexity, service knowledge, quality, mentoring.
+  expectations      Json          @default("{}")
+  /// Minimum approved total score (hundredths, 0–10000) for eligibility.
+  minTotalScore     Int?
+  minMonthsAtPrevious Int?
+  minApprovedAssessments Int      @default(1)
+  approval          ApprovalState @default(UNAPPROVED)
+  isActive          Boolean       @default(true)
+  isDemo            Boolean       @default(false)
+  createdAt         DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime      @updatedAt @db.Timestamptz(3)
+
+  org          Organization                 @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  requirements LevelRequirement[]
+  salaryBands  SalaryBand[]
+  employees    Employee[]
+  history      CareerLevelHistory[]
+  promoFrom    PromotionRecommendation[]    @relation("PromotionFrom")
+  promoTo      PromotionRecommendation[]    @relation("PromotionTo")
+  compRecs     CompensationRecommendation[]
+  hiringLevels HiringDecision[]
+
+  @@unique([orgId, key])
+}
+
+/// Per specialty: competency threshold for reaching a level. isGate = must pass regardless of total.
+model LevelRequirement {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  levelId      String  @db.Uuid
+  specialtyId  String  @db.Uuid
+  competencyId String  @db.Uuid
+  /// hundredths 0–10000
+  minScore     Int
+  isGate       Boolean @default(false)
+
+  level      CareerLevel @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  specialty  Specialty   @relation(fields: [specialtyId], references: [id], onDelete: Restrict)
+  competency Competency  @relation(fields: [competencyId], references: [id], onDelete: Restrict)
+
+  @@unique([levelId, specialtyId, competencyId])
+}
+
+model SalaryBand {
+  id            String        @id @default(uuid(7)) @db.Uuid
+  positionId    String        @db.Uuid
+  levelId       String        @db.Uuid
+  /// whole UZS
+  minAmount     BigInt
+  maxAmount     BigInt
+  currency      String        @default("UZS") @db.Char(3)
+  effectiveFrom DateTime      @db.Date
+  effectiveTo   DateTime?     @db.Date
+  approval      ApprovalState @default(UNAPPROVED)
+  isDemo        Boolean       @default(false)
+  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
+
+  position Position                     @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  level    CareerLevel                  @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  compRecs CompensationRecommendation[]
+
+  @@index([positionId, levelId, effectiveFrom])
+}
+
+// ───────────────────────────── Rubrics ─────────────────────────────
+
+model Rubric {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  specialtyId String        @db.Uuid
+  purpose     RubricPurpose
+  name        Json
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+
+  specialty Specialty       @relation(fields: [specialtyId], references: [id], onDelete: Restrict)
+  versions  RubricVersion[]
+
+  @@unique([specialtyId, purpose])
+}
+
+model RubricVersion {
+  id                   String              @id @default(uuid(7)) @db.Uuid
+  rubricId             String              @db.Uuid
+  version              Int
+  status               RubricVersionStatus @default(DRAFT)
+  /// Set true when the first assessment references this version; DB trigger then blocks edits.
+  isLocked             Boolean             @default(false)
+  allowRenormalization Boolean             @default(false)
+  /// Optional pass mark (hundredths) shown on reports; never auto-rejects.
+  passThreshold        Int?
+  changeNote           String?
+  createdById          String              @db.Uuid
+  createdAt            DateTime            @default(now()) @db.Timestamptz(3)
+  activatedAt          DateTime? @db.Timestamptz(3)
+  isDemo               Boolean             @default(false)
+
+  rubric      Rubric               @relation(fields: [rubricId], references: [id], onDelete: Restrict)
+  createdBy   User                 @relation("RubricVersionCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  criteria    RubricCriterion[]
+  questions   AssessmentQuestion[]
+  assessments Assessment[]
+  aiRuns      AiRun[]
+  rewardPolicies RewardPolicy[]
+
+  @@unique([rubricId, version])
+}
+
+model RubricCriterion {
+  id               String        @id @default(uuid(7)) @db.Uuid
+  rubricVersionId  String        @db.Uuid
+  key              String
+  name             Json
+  description      Json?
+  competencyId     String?       @db.Uuid
+  /// basis points; active criteria must sum to 10000
+  weightBp         Int
+  method           ScoringMethod
+  /// Metric definition for EVIDENCE_METRIC (validated by contracts/MetricConfig)
+  metricConfig     Json?
+  isGate           Boolean       @default(false)
+  /// hundredths; required when isGate
+  gateMinScore     Int?
+  evidenceRequired Boolean       @default(false)
+  minEvidenceCount Int           @default(0)
+  allowNotApplicable Boolean     @default(false)
+  sortOrder        Int           @default(0)
+
+  rubricVersion RubricVersion        @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade)
+  competency    Competency?          @relation(fields: [competencyId], references: [id], onDelete: Restrict)
+  questions     AssessmentQuestion[]
+  results       CriterionResult[]
+  allocations   EvidenceAllocation[]
+
+  @@unique([rubricVersionId, key])
+}
+
+model AssessmentQuestion {
+  id              String         @id @default(uuid(7)) @db.Uuid
+  rubricVersionId String         @db.Uuid
+  criterionId     String         @db.Uuid
+  type            QuestionType
+  /// { uz, ru?, en? } — question text
+  prompt          Json
+  /// MULTIPLE_CHOICE: [{ id, text: {uz,ru,en} }]
+  options         Json?
+  correctOptionIds String[]
+  /// Scoring guide for human evaluators (and AI suggestion)
+  rubricGuide     Json?
+  maxPoints       Int            @default(1)
+  source          ContentSource  @default(HUMAN)
+  status          QuestionStatus @default(DRAFT)
+  approvedById    String?        @db.Uuid
+  approvedAt      DateTime? @db.Timestamptz(3)
+  aiRunId         String?        @db.Uuid
+  sortOrder       Int            @default(0)
+
+  rubricVersion RubricVersion       @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade)
+  criterion     RubricCriterion     @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  approvedBy    User?               @relation(fields: [approvedById], references: [id], onDelete: SetNull)
+  aiRun         AiRun?              @relation(fields: [aiRunId], references: [id], onDelete: SetNull)
+  responses     CandidateResponse[]
+
+  @@index([rubricVersionId, status])
+}
+
+// ───────────────────────────── People ─────────────────────────────
+
+model Employee {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  orgId          String           @db.Uuid
+  userId         String?          @unique @db.Uuid
+  orgUnitId      String           @db.Uuid
+  positionId     String           @db.Uuid
+  currentLevelId String?          @db.Uuid
+  employeeNo     String?
+  fullName       String
+  /// Stable pseudonym used in AI calls and exports, e.g. EMP-7f3a
+  pseudonym      String           @unique
+  hiredOn        DateTime         @db.Date
+  status         EmploymentStatus @default(ACTIVE)
+  fromCandidateId String?         @unique @db.Uuid
+  isDemo         Boolean          @default(false)
+  createdAt      DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @db.Timestamptz(3)
+
+  org           Organization                 @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  user          User?                        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orgUnit       OrgUnit                      @relation(fields: [orgUnitId], references: [id], onDelete: Restrict)
+  position      Position                     @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  currentLevel  CareerLevel?                 @relation(fields: [currentLevelId], references: [id], onDelete: Restrict)
+  fromCandidate Candidate?                   @relation(fields: [fromCandidateId], references: [id], onDelete: SetNull)
+  evidence      Evidence[]
+  assessments   Assessment[]
+  appeals       Appeal[]
+  promotions    PromotionRecommendation[]
+  levelHistory  CareerLevelHistory[]
+  compRecs      CompensationRecommendation[]
+  development   DevelopmentItem[]
+  rewards       RewardRecommendation[]
+
+  @@unique([orgId, employeeNo])
+  @@index([orgId, orgUnitId, status])
+  @@index([positionId])
+}
+
+model Candidate {
+  id             String          @id @default(uuid(7)) @db.Uuid
+  orgId          String          @db.Uuid
+  positionId     String          @db.Uuid
+  /// null after anonymization
+  fullName       String?
+  email          String?         @db.Citext
+  phone          String?
+  /// Free-form experience summary entered by HR (user content)
+  experience     String?
+  pseudonym      String          @unique
+  status         CandidateStatus @default(NEW)
+  consentAt      DateTime? @db.Timestamptz(3)
+  retentionUntil DateTime? @db.Timestamptz(3)
+  anonymizedAt   DateTime? @db.Timestamptz(3)
+  isDemo         Boolean         @default(false)
+  createdAt      DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @db.Timestamptz(3)
+
+  org         Organization                 @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  position    Position                     @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  assessments Assessment[]
+  decisions   HiringDecision[]
+  compRecs    CompensationRecommendation[]
+  employee    Employee?
+
+  @@index([orgId, status])
+  @@index([retentionUntil])
+}
+
+// ─────────────────────────── Assessments ───────────────────────────
+
+model PerformancePeriod {
+  id       String       @id @default(uuid(7)) @db.Uuid
+  orgId    String       @db.Uuid
+  startsOn DateTime     @db.Date
+  endsOn   DateTime     @db.Date
+  status   PeriodStatus @default(OPEN)
+  isDemo   Boolean      @default(false)
+
+  org         Organization           @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  evidence    Evidence[]
+  allocations EvidenceAllocation[]
+  assessments Assessment[]
+  budgets     RewardBudget[]
+  rewards     RewardRecommendation[]
+
+  @@unique([orgId, startsOn])
+}
+
+model Assessment {
+  id              String           @id @default(uuid(7)) @db.Uuid
+  orgId           String           @db.Uuid
+  kind            AssessmentKind
+  rubricVersionId String           @db.Uuid
+  employeeId      String?          @db.Uuid
+  candidateId     String?          @db.Uuid
+  periodId        String?          @db.Uuid
+  status          AssessmentStatus @default(DRAFT)
+  /// true when all required evidence/answers are present (computed)
+  isComplete      Boolean          @default(false)
+  /// hundredths 0–10000; null until computable
+  totalScore      Int?
+  /// Full deterministic calculation trace (inputs, weights, per-criterion results, gate outcomes, rounding)
+  calcSnapshot    Json?
+  calcVersion     String?
+  feedback        String?
+  evaluatorId     String?          @db.Uuid
+  approvedById    String?          @db.Uuid
+  approvedAt      DateTime? @db.Timestamptz(3)
+  /// Reassessment chain
+  supersedesId    String?          @unique @db.Uuid
+  isDemo          Boolean          @default(false)
+  createdAt       DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime         @updatedAt @db.Timestamptz(3)
+
+  rubricVersion RubricVersion        @relation(fields: [rubricVersionId], references: [id], onDelete: Restrict)
+  employee      Employee?            @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  candidate     Candidate?           @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  period        PerformancePeriod?   @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  evaluator     User?                @relation("AssessmentEvaluator", fields: [evaluatorId], references: [id], onDelete: Restrict)
+  approvedBy    User?                @relation("AssessmentApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  supersedes    Assessment?          @relation("Reassessment", fields: [supersedesId], references: [id], onDelete: Restrict)
+  supersededBy  Assessment?          @relation("Reassessment")
+  invite        AssessmentInvite?
+  responses     CandidateResponse[]
+  results       CriterionResult[]
+  allocations   EvidenceAllocation[]
+  appeals       Appeal[]
+  hiring        HiringDecision[]
+  rewards       RewardRecommendation[]
+  aiRuns        AiRun[]
+
+  @@index([orgId, kind, status])
+  @@index([employeeId, periodId])
+  @@index([candidateId])
+  @@index([periodId, rubricVersionId, status])
+}
+
+model AssessmentInvite {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  assessmentId String    @unique @db.Uuid
+  tokenHash    String    @unique
+  locale       Locale    @default(uz)
+  expiresAt    DateTime @db.Timestamptz(3)
+  timeLimitMin Int?
+  startedAt    DateTime? @db.Timestamptz(3)
+  submittedAt  DateTime? @db.Timestamptz(3)
+  revokedAt    DateTime? @db.Timestamptz(3)
+  createdById  String    @db.Uuid
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  createdBy  User       @relation(fields: [createdById], references: [id], onDelete: Restrict)
+}
+
+model CandidateResponse {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  assessmentId String   @db.Uuid
+  questionId   String   @db.Uuid
+  /// MULTIPLE_CHOICE: { selected: [ids] }; text types: { text }
+  answer       Json
+  /// points awarded automatically (MULTIPLE_CHOICE only)
+  autoPoints   Int?
+  savedAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  assessment Assessment         @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  question   AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([assessmentId, questionId])
+}
+
+model CriterionResult {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  assessmentId     String    @db.Uuid
+  criterionId      String    @db.Uuid
+  /// all scores in hundredths 0–10000
+  computedScore    Int?
+  aiSuggestedScore Int?
+  aiRunId          String?   @db.Uuid
+  humanScore       Int?
+  finalScore       Int?
+  notApplicable    Boolean   @default(false)
+  rationale        String?
+  scoredById       String?   @db.Uuid
+  scoredAt         DateTime? @db.Timestamptz(3)
+
+  assessment Assessment      @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  criterion  RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Restrict)
+  aiRun      AiRun?          @relation(fields: [aiRunId], references: [id], onDelete: SetNull)
+  scoredBy   User?           @relation(fields: [scoredById], references: [id], onDelete: Restrict)
+
+  @@unique([assessmentId, criterionId])
+}
+
+// ───────────────────────────── Evidence ─────────────────────────────
+
+model Evidence {
+  id              String         @id @default(uuid(7)) @db.Uuid
+  orgId           String         @db.Uuid
+  employeeId      String         @db.Uuid
+  periodId        String         @db.Uuid
+  type            EvidenceType
+  source          EvidenceSource @default(MANUAL)
+  /// required for CSV_IMPORT and CRM; dedupe key with (orgId, source)
+  externalId      String?
+  title           String
+  description     String?
+  occurredOn      DateTime       @db.Date
+  /// whole UZS retained by the company (counts toward revenue)
+  serviceFee      BigInt?
+  /// whole UZS collected on behalf of the state (never counts)
+  governmentFee   BigInt?
+  quantity        Int?
+  /// e.g. CSAT 1–5 or complexity tier, validated per type
+  metrics         Json?
+  status          EvidenceStatus @default(SUBMITTED)
+  submittedById   String?        @db.Uuid
+  verifiedById    String?        @db.Uuid
+  verifiedAt      DateTime? @db.Timestamptz(3)
+  rejectionReason String?
+  importBatchId   String?        @db.Uuid
+  isDemo          Boolean        @default(false)
+  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime       @updatedAt @db.Timestamptz(3)
+
+  org         Organization         @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  employee    Employee             @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  period      PerformancePeriod    @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  submittedBy User?                @relation("EvidenceSubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
+  verifiedBy  User?                @relation("EvidenceVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
+  importBatch ImportBatch?         @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  attachments EvidenceAttachment[]
+  allocation  EvidenceAllocation[]
+
+  @@unique([orgId, source, externalId])
+  @@index([employeeId, periodId, status])
+  @@index([orgId, status])
+}
+
+model EvidenceAttachment {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  evidenceId String   @db.Uuid
+  storageKey String   @unique
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+  sha256     String
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  evidence Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+}
+
+/// Links one CONTRIBUTION evidence item (training, mentoring, improvement…) to one criterion. Unique (evidenceId, periodId) = counted once.
+/// RECORD evidence (service records, sales, feedback) is never allocated; metric criteria read it, and rubric validation forbids two criteria reading the same field.
+model EvidenceAllocation {
+  id           String @id @default(uuid(7)) @db.Uuid
+  evidenceId   String @db.Uuid
+  periodId     String @db.Uuid
+  assessmentId String @db.Uuid
+  criterionId  String @db.Uuid
+
+  evidence   Evidence          @relation(fields: [evidenceId], references: [id], onDelete: Restrict)
+  period     PerformancePeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  assessment Assessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  criterion  RubricCriterion   @relation(fields: [criterionId], references: [id], onDelete: Restrict)
+
+  @@unique([evidenceId, periodId])
+  @@index([assessmentId, criterionId])
+}
+
+// ───────────────────── Appeals, promotions, hiring ─────────────────────
+
+model Appeal {
+  id               String       @id @default(uuid(7)) @db.Uuid
+  assessmentId     String       @db.Uuid
+  employeeId       String       @db.Uuid
+  reason           String
+  status           AppealStatus @default(OPEN)
+  resolution       String?
+  resolvedById     String?      @db.Uuid
+  resolvedAt       DateTime? @db.Timestamptz(3)
+  createdAt        DateTime     @default(now()) @db.Timestamptz(3)
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  resolvedBy User?      @relation(fields: [resolvedById], references: [id], onDelete: Restrict)
+
+  @@index([assessmentId])
+}
+
+model PromotionRecommendation {
+  id                String          @id @default(uuid(7)) @db.Uuid
+  employeeId        String          @db.Uuid
+  fromLevelId       String?         @db.Uuid
+  toLevelId         String          @db.Uuid
+  status            PromotionStatus @default(RECOMMENDED)
+  /// Eligibility snapshot: thresholds, gates, assessments used (domain/gates output)
+  eligibility       Json
+  basisAssessmentIds String[]
+  note              String?
+  recommendedById   String          @db.Uuid
+  decidedById       String?         @db.Uuid
+  decidedAt         DateTime? @db.Timestamptz(3)
+  decisionNote      String?
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+
+  employee      Employee            @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  fromLevel     CareerLevel?        @relation("PromotionFrom", fields: [fromLevelId], references: [id], onDelete: Restrict)
+  toLevel       CareerLevel         @relation("PromotionTo", fields: [toLevelId], references: [id], onDelete: Restrict)
+  recommendedBy User                @relation("PromotionRecommender", fields: [recommendedById], references: [id], onDelete: Restrict)
+  decidedBy     User?               @relation("PromotionDecider", fields: [decidedById], references: [id], onDelete: Restrict)
+  historyEntry  CareerLevelHistory?
+
+  @@index([employeeId, status])
+}
+
+model CareerLevelHistory {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  employeeId    String   @db.Uuid
+  levelId       String   @db.Uuid
+  effectiveFrom DateTime @db.Date
+  /// HIRE | PROMOTION | CORRECTION
+  reason        String
+  promotionId   String?  @unique @db.Uuid
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  employee  Employee                 @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  level     CareerLevel              @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  promotion PromotionRecommendation? @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+
+  @@index([employeeId, effectiveFrom])
+}
+
+model HiringDecision {
+  id           String             @id @default(uuid(7)) @db.Uuid
+  candidateId  String             @db.Uuid
+  assessmentId String?            @db.Uuid
+  decision     HiringDecisionType
+  levelId      String?            @db.Uuid
+  note         String?
+  decidedById  String             @db.Uuid
+  createdAt    DateTime           @default(now()) @db.Timestamptz(3)
+
+  candidate  Candidate    @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  assessment Assessment?  @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  level      CareerLevel? @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  decidedBy  User         @relation(fields: [decidedById], references: [id], onDelete: Restrict)
+
+  @@index([candidateId, createdAt])
+}
+
+model CompensationRecommendation {
+  id            String                @id @default(uuid(7)) @db.Uuid
+  subject       RecommendationSubject
+  candidateId   String?               @db.Uuid
+  employeeId    String?               @db.Uuid
+  positionId    String                @db.Uuid
+  levelId       String                @db.Uuid
+  salaryBandId  String?               @db.Uuid
+  /// whole UZS; null when no band configured
+  rangeMin      BigInt?
+  rangeMax      BigInt?
+  /// domain/salary output: inputs, band, formula, missing data
+  explanation   Json
+  status        CompensationStatus    @default(PROPOSED)
+  proposedById  String                @db.Uuid
+  decidedById   String?               @db.Uuid
+  decidedAt     DateTime? @db.Timestamptz(3)
+  decisionNote  String?
+  createdAt     DateTime              @default(now()) @db.Timestamptz(3)
+
+  candidate  Candidate?  @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  employee   Employee?   @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  position   Position    @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  level      CareerLevel @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  salaryBand SalaryBand? @relation(fields: [salaryBandId], references: [id], onDelete: Restrict)
+  proposedBy User        @relation("CompProposer", fields: [proposedById], references: [id], onDelete: Restrict)
+  decidedBy  User?       @relation("CompDecider", fields: [decidedById], references: [id], onDelete: Restrict)
+
+  @@index([employeeId])
+  @@index([candidateId])
+}
+
+model DevelopmentItem {
+  id           String                @id @default(uuid(7)) @db.Uuid
+  employeeId   String                @db.Uuid
+  competencyId String?               @db.Uuid
+  title        String
+  /// hundredths target score for the competency, optional
+  targetScore  Int?
+  dueOn        DateTime?             @db.Date
+  status       DevelopmentItemStatus @default(PLANNED)
+  source       ContentSource         @default(HUMAN)
+  aiRunId      String?               @db.Uuid
+  createdAt    DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime              @updatedAt @db.Timestamptz(3)
+
+  employee   Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  competency Competency? @relation(fields: [competencyId], references: [id], onDelete: SetNull)
+  aiRun      AiRun?      @relation(fields: [aiRunId], references: [id], onDelete: SetNull)
+
+  @@index([employeeId, status])
+}
+
+// ───────────────────────────── Rewards ─────────────────────────────
+
+model RewardPolicy {
+  id              String        @id @default(uuid(7)) @db.Uuid
+  orgId           String        @db.Uuid
+  specialtyId     String        @db.Uuid
+  /// Ranking/reward cohort = specialty + this rubric version
+  rubricVersionId String        @db.Uuid
+  name            Json
+  kind            RewardKind    @default(CASH)
+  /// contracts/RewardPolicyConfig: threshold, cap, roundingStep, method, minCohort
+  config          Json
+  approval        ApprovalState @default(UNAPPROVED)
+  isActive        Boolean       @default(true)
+  isDemo          Boolean       @default(false)
+  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
+
+  org           Organization           @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  specialty     Specialty              @relation(fields: [specialtyId], references: [id], onDelete: Restrict)
+  rubricVersion RubricVersion          @relation(fields: [rubricVersionId], references: [id], onDelete: Restrict)
+  budgets       RewardBudget[]
+  rewards       RewardRecommendation[]
+}
+
+model RewardBudget {
+  id       String @id @default(uuid(7)) @db.Uuid
+  policyId String @db.Uuid
+  periodId String @db.Uuid
+  /// whole UZS
+  amount   BigInt
+
+  policy RewardPolicy      @relation(fields: [policyId], references: [id], onDelete: Restrict)
+  period PerformancePeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+
+  @@unique([policyId, periodId])
+}
+
+model RewardRecommendation {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  policyId     String       @db.Uuid
+  periodId     String       @db.Uuid
+  employeeId   String       @db.Uuid
+  assessmentId String       @db.Uuid
+  kind         RewardKind
+  /// whole UZS; null for RECOGNITION
+  amount       BigInt?
+  /// domain/rewards output for this person
+  explanation  Json
+  status       RewardStatus @default(PROPOSED)
+  approvedById String?      @db.Uuid
+  approvedAt   DateTime? @db.Timestamptz(3)
+  paidMarkedById String?    @db.Uuid
+  paidAt       DateTime? @db.Timestamptz(3)
+  cancelReason String?
+  createdAt    DateTime     @default(now()) @db.Timestamptz(3)
+
+  policy       RewardPolicy      @relation(fields: [policyId], references: [id], onDelete: Restrict)
+  period       PerformancePeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  employee     Employee          @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  assessment   Assessment        @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  approvedBy   User?             @relation("RewardApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  paidMarkedBy User?             @relation("RewardPaidMarker", fields: [paidMarkedById], references: [id], onDelete: Restrict)
+
+  @@unique([employeeId, periodId, policyId])
+  @@index([periodId, status])
+}
+
+// ───────────────────── Platform: notifications, audit, AI ─────────────────────
+
+model Notification {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @db.Uuid
+  /// i18n key, e.g. notification.evidenceVerified
+  type      String
+  /// ids only — never confidential values
+  payload   Json      @default("{}")
+  readAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+}
+
+/// Append-only. UPDATE/DELETE revoked from the application DB role.
+model AuditEvent {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  orgId      String   @db.Uuid
+  actorId    String?  @db.Uuid
+  /// e.g. assessment.approved, rubric.activated, reward.paid
+  action     String
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  requestId  String?
+  ip         String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  actor User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, entityType, entityId, createdAt])
+  @@index([orgId, createdAt])
+  @@index([actorId, createdAt])
+}
+
+model AiRun {
+  id              String      @id @default(uuid(7)) @db.Uuid
+  purpose         String
+  promptVersion   String
+  provider        String
+  model           String
+  locale          Locale
+  rubricVersionId String?     @db.Uuid
+  assessmentId    String?     @db.Uuid
+  inputHash       String
+  /// pseudonymized input actually sent (retention-limited)
+  input           Json?
+  output          Json?
+  status          AiRunStatus @default(QUEUED)
+  errorCode       String?
+  latencyMs       Int?
+  attempts        Int         @default(0)
+  createdById     String?     @db.Uuid
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+  finishedAt      DateTime? @db.Timestamptz(3)
+
+  rubricVersion RubricVersion?       @relation(fields: [rubricVersionId], references: [id], onDelete: SetNull)
+  assessment    Assessment?          @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  createdBy     User?                @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  questions     AssessmentQuestion[]
+  results       CriterionResult[]
+  development   DevelopmentItem[]
+
+  @@index([assessmentId, purpose, createdAt])
+  @@index([status, createdAt])
+}
+
+model ReferenceDocument {
+  id           String        @id @default(uuid(7)) @db.Uuid
+  orgId        String        @db.Uuid
+  title        String
+  storageKey   String        @unique
+  version      String
+  approval     ApprovalState @default(UNAPPROVED)
+  validFrom    DateTime?     @db.Date
+  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+}
+
+// ───────────────────── Integrations, import, jobs ─────────────────────
+
+model CrmConnection {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  orgId      String    @db.Uuid
+  provider   String
+  status     CrmStatus @default(NOT_CONFIGURED)
+  /// Non-secret settings only. Credentials live in env / secret store.
+  settings   Json      @default("{}")
+  lastSyncAt DateTime? @db.Timestamptz(3)
+  lastError  String?
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @db.Timestamptz(3)
+
+  org      Organization      @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  mappings ExternalMapping[]
+
+  @@unique([orgId, provider])
+}
+
+model ExternalMapping {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  connectionId String   @db.Uuid
+  /// EMPLOYEE | SERVICE_RECORD | …
+  entityType   String
+  externalId   String
+  internalId   String   @db.Uuid
+  /// hash of last imported payload; detects corrections
+  payloadHash  String?
+  syncedAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  connection CrmConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, entityType, externalId])
+  @@index([entityType, internalId])
+}
+
+model ImportBatch {
+  id          String       @id @default(uuid(7)) @db.Uuid
+  orgId       String       @db.Uuid
+  type        ImportType
+  fileName    String
+  sha256      String
+  status      ImportStatus
+  rowCount    Int
+  createdRows Int          @default(0)
+  skippedRows Int          @default(0)
+  errorReport Json?
+  createdById String       @db.Uuid
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  createdBy User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  evidence  Evidence[]
+
+  @@index([orgId, sha256])
+}
+
+model Job {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  type           String
+  payload        Json
+  status         JobStatus @default(PENDING)
+  runAt          DateTime  @default(now()) @db.Timestamptz(3)
+  attempts       Int       @default(0)
+  maxAttempts    Int       @default(5)
+  lockedAt       DateTime? @db.Timestamptz(3)
+  lockedBy       String?
+  lastError      String?
+  idempotencyKey String?   @unique
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  finishedAt     DateTime? @db.Timestamptz(3)
+
+  @@index([status, runAt])
+}

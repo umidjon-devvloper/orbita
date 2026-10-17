@@ -2,3 +2,5 @@ pnpm-lock.yaml
 docs/BUILD_PROMPT.md
 coverage
 dist
+apps/api/src/generated
+apps/api/prisma/migrations/**/migration.sql

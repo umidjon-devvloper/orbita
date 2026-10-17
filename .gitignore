@@ -10,3 +10,4 @@ test-results/
 storage/
 *.log
 .DS_Store
+apps/api/src/generated/

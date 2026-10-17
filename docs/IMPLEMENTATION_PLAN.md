@@ -7,7 +7,7 @@ Status: Draft for review · Phase 1. Each slice ends with: tests green → `PROG
 Repository was empty → greenfield. Deliverables: PRD, ARCHITECTURE, DATABASE_DESIGN (+ validated draft schema), SCORING_MODEL (+ executable reference), SECURITY, this plan, OPEN_QUESTIONS, DECISIONS, PROGRESS, CLAUDE.md.
 **STOP for owner review.**
 
-## Phase 2 — Foundation (2.1 ✅ 2.2 ✅)
+## Phase 2 — Foundation (2.1 ✅ 2.2 ✅ 2.3 ✅)
 
 | #   | Slice                                                                                                                                                                                            | Done when                                                                                   |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |

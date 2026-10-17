@@ -1,22 +1,22 @@
 # Database Design — Orbita
 
 Status: Draft for review · Phase 1
-Source of truth for the model: [`schema.draft.prisma`](./schema.draft.prisma) — 46 models, 32 enums, validated with Prisma's schema validator (7.x and 8.x). It moves to `apps/api/prisma/schema.prisma` in Phase 2.
+Source of truth for the model: [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) — 46 models, 32 enums, Prisma 7.10. Migrations: `apps/api/prisma/migrations/` (extensions → init → constraints).
 
 ## 1. Conventions
 
-| Topic                           | Rule                                                                                                                                                                                       |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| IDs                             | UUIDv7 (`@default(uuid(7))`, `uuid` column) — sortable by time, safe to expose                                                                                                             |
-| Tenancy                         | Every root entity has `orgId`; all queries filter by the user's org. Single-org deployment in MVP, multi-org-ready.                                                                        |
-| Scores                          | **Integer hundredths** `0–10000` (`74.90` → `7490`). Exact integer math, no `Decimal` arithmetic in JS. Displayed with 2 decimals.                                                         |
-| Weights                         | Integer basis points; active criteria of a rubric version sum to `10000`.                                                                                                                  |
-| Money                           | `BIGINT` whole UZS. JSON transport as strings. Currency column kept for future multi-currency (`UZS` only in MVP).                                                                         |
-| Dates                           | `timestamptz` for events; `date` for business dates (periods, hire date, evidence date) interpreted in `Asia/Tashkent`.                                                                    |
-| Localized config text           | `Json` `{ "uz": "...", "ru": "...", "en": "..." }`, `uz` required; fallback chain `requested → uz`. User-generated content (feedback, evidence text) is plain `text` and never translated. |
-| Demo data                       | `isDemo` on every seedable table; `db:seed:clear-demo` deletes by flag; UI banner when any demo row exists.                                                                                |
-| Approval of illustrative config | `approval = UNAPPROVED` on levels, salary bands, reward policies until the owner approves. UI shows a badge.                                                                               |
-| Soft delete                     | Not used. Config entities are deactivated with `isActive=false`; history entities are never deleted (retention job anonymizes).                                                            |
+| Topic                           | Rule                                                                                                                                                                                               |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| IDs                             | UUIDv7 (`@default(uuid(7))`, `uuid` column) — sortable by time, safe to expose                                                                                                                     |
+| Tenancy                         | Every root entity has `orgId`; all queries filter by the user's org. Single-org deployment in MVP, multi-org-ready.                                                                                |
+| Scores                          | **Integer hundredths** `0–10000` (`74.90` → `7490`). Exact integer math, no `Decimal` arithmetic in JS. Displayed with 2 decimals.                                                                 |
+| Weights                         | Integer basis points; active criteria of a rubric version sum to `10000`.                                                                                                                          |
+| Money                           | `BIGINT` whole UZS. JSON transport as strings. Currency column kept for future multi-currency (`UZS` only in MVP).                                                                                 |
+| Dates                           | `timestamptz(3)` for events (every `DateTime` without `@db.Date` is annotated `@db.Timestamptz(3)`); `date` for business dates (periods, hire date, evidence date) interpreted in `Asia/Tashkent`. |
+| Localized config text           | `Json` `{ "uz": "...", "ru": "...", "en": "..." }`, `uz` required; fallback chain `requested → uz`. User-generated content (feedback, evidence text) is plain `text` and never translated.         |
+| Demo data                       | `isDemo` on every seedable table; `db:seed:clear-demo` deletes by flag; UI banner when any demo row exists.                                                                                        |
+| Approval of illustrative config | `approval = UNAPPROVED` on levels, salary bands, reward policies until the owner approves. UI shows a badge.                                                                                       |
+| Soft delete                     | Not used. Config entities are deactivated with `isActive=false`; history entities are never deleted (retention job anonymizes).                                                                    |
 
 > **Decision (deviation from v2 prompt):** v2 said "Decimal(5,2)" for scores. Integer hundredths give the same precision with simpler, exact arithmetic in TypeScript and identical values in SQL. Logged in DECISIONS.md D-07.
 
@@ -77,72 +77,36 @@ erDiagram
 | Platform    | Notification, AuditEvent, AiRun, ReferenceDocument                                                               | AuditEvent append-only.                                                                            |
 | Integration | CrmConnection, ExternalMapping, ImportBatch, Job                                                                 | Credentials never stored in DB.                                                                    |
 
-## 4. Constraints Prisma cannot express (raw SQL in migrations)
+## 4. Constraints Prisma cannot express
 
-Written in `apps/api/prisma/migrations/*_constraints/migration.sql` right after the generated migration.
+Implemented in [`apps/api/prisma/migrations/*_constraints/migration.sql`](../apps/api/prisma/migrations) (the single source — not copied here) and proven by `apps/api/src/db/constraints.db.test.ts` against a real Postgres 16.
 
-```sql
-CREATE EXTENSION IF NOT EXISTS citext;
+| Rule                                                             | Mechanism            | Error code / name                                                    |
+| ---------------------------------------------------------------- | -------------------- | -------------------------------------------------------------------- |
+| Scores, weights, thresholds in 0–100                             | CHECK                | `*_range`, `RubricCriterion_gate_min`                                |
+| Gate criterion has a minimum; evidence count consistent          | CHECK                | `RubricCriterion_gate_min`, `_min_evidence`                          |
+| Config names carry Uzbek                                         | CHECK on JSON        | `*_name_uz`, `Position_title_uz`                                     |
+| Assessment subject matches kind; compensation subject            | CHECK                | `Assessment_subject_by_kind`, `CompensationRecommendation_subject`   |
+| One live performance assessment per employee+period+version      | partial UNIQUE       | `Assessment_one_live_performance`                                    |
+| One ACTIVE version per rubric; unique active level rank          | partial UNIQUE       | `RubricVersion_one_active`, `CareerLevel_active_rank`                |
+| Money non-negative; bands min ≤ max; PAID has who+when           | CHECK                | `SalaryBand_order`, `Evidence_fees_nonneg`, `RewardRecommendation_*` |
+| Imported evidence has an external id; CSAT 1–5                   | CHECK                | `Evidence_external_id_required`, `Evidence_csat_range`               |
+| Bands and periods never overlap                                  | EXCLUDE (btree_gist) | `SalaryBand_no_overlap`, `PerformancePeriod_no_overlap`              |
+| Rubric version locks on first assessment, then immutable         | triggers             | `orbita:rubric.versionLocked`                                        |
+| Final assessments (approved/rejected/appealed/reassessed) frozen | triggers             | `orbita:assessment.finalized`                                        |
+| Only contribution evidence is allocated, same period             | trigger              | `orbita:allocation.*`                                                |
+| Audit log append-only (UPDATE/DELETE/TRUNCATE) for every role    | triggers             | `orbita:audit.appendOnly`                                            |
 
--- Scores and weights in range
-ALTER TABLE "RubricCriterion"  ADD CONSTRAINT weight_range   CHECK ("weightBp" BETWEEN 0 AND 10000);
-ALTER TABLE "RubricCriterion"  ADD CONSTRAINT gate_needs_min CHECK (NOT "isGate" OR "gateMinScore" BETWEEN 0 AND 10000);
-ALTER TABLE "CriterionResult"  ADD CONSTRAINT score_range    CHECK (
-  coalesce("computedScore",0)    BETWEEN 0 AND 10000 AND coalesce("aiSuggestedScore",0) BETWEEN 0 AND 10000 AND
-  coalesce("humanScore",0)       BETWEEN 0 AND 10000 AND coalesce("finalScore",0)       BETWEEN 0 AND 10000);
-ALTER TABLE "Assessment"       ADD CONSTRAINT total_range    CHECK ("totalScore" IS NULL OR "totalScore" BETWEEN 0 AND 10000);
-ALTER TABLE "LevelRequirement" ADD CONSTRAINT min_range      CHECK ("minScore" BETWEEN 0 AND 10000);
+Rules of thumb learned while testing:
 
--- Assessment subject matches kind
-ALTER TABLE "Assessment" ADD CONSTRAINT subject_by_kind CHECK (
-  ("kind" = 'CANDIDATE'    AND "candidateId" IS NOT NULL AND "employeeId" IS NULL AND "periodId" IS NULL) OR
-  ("kind" = 'PERFORMANCE'  AND "employeeId" IS NOT NULL AND "candidateId" IS NULL AND "periodId" IS NOT NULL) OR
-  ("kind" = 'LEVEL_REVIEW' AND "employeeId" IS NOT NULL AND "candidateId" IS NULL));
+- **A CHECK passes when its expression is NULL.** Every nullable expression is wrapped in `IS TRUE` (two such bugs were caught by the tests before commit).
+- Trigger errors carry a stable `orbita:<code>` message that the API maps to an i18n key.
+- Audit immutability is a trigger, not only a privilege, so it also binds the table owner. Retention purges run as a maintenance job that disables the trigger inside its own transaction.
 
--- One live performance assessment per employee+period+rubric version (reassessments supersede)
-CREATE UNIQUE INDEX one_live_perf_assessment ON "Assessment" ("employeeId","periodId","rubricVersionId")
-  WHERE "kind" = 'PERFORMANCE' AND "status" NOT IN ('REJECTED','REASSESSED');
+### Migration tooling
 
--- Only one ACTIVE version per rubric
-CREATE UNIQUE INDEX one_active_version ON "RubricVersion" ("rubricId") WHERE "status" = 'ACTIVE';
-
--- Active level ranks unique
-CREATE UNIQUE INDEX active_level_rank ON "CareerLevel" ("orgId","rank") WHERE "isActive";
-
--- Money
-ALTER TABLE "SalaryBand"  ADD CONSTRAINT band_order CHECK ("minAmount" >= 0 AND "minAmount" <= "maxAmount");
-ALTER TABLE "SalaryBand"  ADD CONSTRAINT band_dates CHECK ("effectiveTo" IS NULL OR "effectiveTo" > "effectiveFrom");
-ALTER TABLE "Evidence"    ADD CONSTRAINT fees_nonneg CHECK (coalesce("serviceFee",0) >= 0 AND coalesce("governmentFee",0) >= 0);
-ALTER TABLE "Evidence"    ADD CONSTRAINT ext_id_required CHECK ("source" = 'MANUAL' OR "externalId" IS NOT NULL);
-ALTER TABLE "RewardBudget"         ADD CONSTRAINT budget_nonneg CHECK ("amount" >= 0);
-ALTER TABLE "RewardRecommendation" ADD CONSTRAINT reward_amount CHECK (
-  ("kind" = 'CASH' AND "amount" IS NOT NULL AND "amount" >= 0) OR ("kind" = 'RECOGNITION' AND "amount" IS NULL));
-ALTER TABLE "CompensationRecommendation" ADD CONSTRAINT comp_subject CHECK (
-  ("subject" = 'CANDIDATE' AND "candidateId" IS NOT NULL AND "employeeId" IS NULL) OR
-  ("subject" = 'EMPLOYEE'  AND "employeeId"  IS NOT NULL AND "candidateId" IS NULL));
-
--- Salary bands: no overlapping effective ranges for the same position+level
-CREATE EXTENSION IF NOT EXISTS btree_gist;
-ALTER TABLE "SalaryBand" ADD CONSTRAINT band_no_overlap EXCLUDE USING gist (
-  "positionId" WITH =, "levelId" WITH =,
-  daterange("effectiveFrom", coalesce("effectiveTo", 'infinity'::date), '[)') WITH &&);
-
--- Periods do not overlap
-ALTER TABLE "PerformancePeriod" ADD CONSTRAINT period_no_overlap EXCLUDE USING gist (
-  "orgId" WITH =, daterange("startsOn", "endsOn", '[]') WITH &&);
-
--- Immutability: locked rubric versions and their criteria/questions
-CREATE FUNCTION forbid_locked_rubric_change() RETURNS trigger AS $$ … raise exception if parent version isLocked $$;
--- triggers on RubricCriterion, AssessmentQuestion (UPDATE/DELETE/INSERT) and RubricVersion (UPDATE of anything except status RETIRED)
-
--- Approved assessments: criterion results and totals frozen
-CREATE FUNCTION forbid_approved_assessment_change() …;  -- triggers on CriterionResult and Assessment(totalScore, calcSnapshot)
-
--- Append-only audit
-REVOKE UPDATE, DELETE ON "AuditEvent" FROM orbita_app;
-```
-
-The application role `orbita_app` owns no DDL rights; migrations run as `orbita_migrator`.
+- Normal machines: `pnpm db:migrate` (`prisma migrate deploy`), `prisma migrate dev` to create migrations.
+- Where `binaries.prisma.sh` is unreachable: `apps/api/scripts/schema-engine-wasm.mjs` uses Prisma's schema engine compiled to WASM (pinned to the CLI's engine build) to create migrations schema-to-schema, and applies migrations one transaction each with the same `_prisma_migrations` bookkeeping (sha256 checksum). Histories are interchangeable with the native CLI.
 
 ## 5. Uniqueness and idempotency keys
 

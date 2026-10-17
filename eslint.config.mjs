@@ -15,7 +15,16 @@ const NODE_BUILTINS = [
 ];
 
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/coverage/**", "**/node_modules/**", "**/.next/**", "docs/**"] },
+  {
+    ignores: [
+      "**/dist/**",
+      "**/coverage/**",
+      "**/node_modules/**",
+      "**/.next/**",
+      "docs/**",
+      "apps/api/src/generated/**",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {
@@ -67,4 +76,5 @@ export default tseslint.config(
     },
   },
   { files: ["**/*.mjs", "**/*.js"], ...tseslint.configs.disableTypeChecked },
+  { files: ["apps/*/scripts/**/*.mjs"], rules: { "no-console": "off" } },
 );

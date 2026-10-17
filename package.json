@@ -9,11 +9,14 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "pnpm -r --if-present typecheck",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test": "vitest run --project unit",
+    "test:coverage": "vitest run --project unit --coverage",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test:coverage"
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test:coverage && pnpm test:db",
+    "test:db": "vitest run --project db",
+    "db:generate": "pnpm --filter @orbita/api db:generate",
+    "db:migrate": "pnpm --filter @orbita/api db:migrate"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

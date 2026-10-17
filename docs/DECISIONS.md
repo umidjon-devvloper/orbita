@@ -6,7 +6,7 @@ One line each: ID · date · decision — reason.
 - D-02 · 2026-10-18 · Modular monolith in a pnpm monorepo (web, api, domain, contracts, i18n) — one team, strong consistency needs, simplest deploy.
 - D-03 · 2026-10-18 · All business rules live in `packages/domain` as pure functions returning `Result` — testable without DB, reproducible snapshots.
 - D-04 · 2026-10-18 · Prisma **7.x stable** pinned (not 8.0 RC, which is currently npm `latest`): connection URL in `prisma.config.ts`, `prisma-client` generator, `@prisma/adapter-pg` at runtime — avoid pre-release ORM in a product handling money.
-- D-05 · 2026-10-18 · Draft schema validated with Prisma's WASM validator (7.1 and 8.1); CLI validation + migration run deferred to Phase 2 because engine binaries cannot be downloaded in the spec environment.
+- D-05 · 2026-10-18 · Draft schema validated with Prisma's WASM validator (7.1 and 8.1) in Phase 1; superseded by D-33 (schema now lives in apps/api).
 - D-06 · 2026-10-18 · UUIDv7 primary keys — time-sortable, non-guessable, safe in URLs.
 - D-07 · 2026-10-18 · Scores stored as integer hundredths (0–10000) instead of `Decimal(5,2)` — identical precision, exact integer math in TS and SQL, no decimal library.
 - D-08 · 2026-10-18 · Weights in basis points, must sum to exactly 10000 — integer validation, no float tolerance.
@@ -34,3 +34,9 @@ One line each: ID · date · decision — reason.
 - D-30 · 2026-10-18 · Coverage threshold 100 % (lines, branches, functions) on packages/domain; impossible branches are removed by restructuring, not suppressed.
 - D-31 · 2026-10-18 · Level requirements: gate = blocks; non-gate = advisory shortfall shown to the approver. Promotion blockers: minApprovedAssessments (default 1) and minMonthsAtPrevious (default 0).
 - D-32 · 2026-10-18 · Full local check is `pnpm run verify` (lint, format, typecheck, tests + coverage); `pnpm ci` is a reserved pnpm command.
+- D-33 · 2026-10-18 · Migration fallback without native engine binaries: Prisma's schema engine as WASM (exact CLI engine build) creates migrations schema-to-schema (snapshot stored per migration); deploy runs each migration in one pg transaction with Prisma-compatible `_prisma_migrations` rows. Found: the CLI with a missing binary can exit 0 with an empty diff, and the engine's adapter path splits plpgsql `$$` bodies and applies migrations partially — both avoided.
+- D-34 · 2026-10-18 · All event timestamps `timestamptz(3)` (Prisma default is timestamp without time zone).
+- D-35 · 2026-10-18 · Audit append-only enforced by triggers (UPDATE/DELETE/TRUNCATE) for every role, not only by revoking privileges from the app role — also binds the owner.
+- D-36 · 2026-10-18 · Rubric version locks itself in the DB when the first assessment references it (AFTER INSERT trigger) — the lock cannot be forgotten by application code.
+- D-37 · 2026-10-18 · CHECK expressions that can be NULL are wrapped in `IS TRUE` (NULL passes a CHECK).
+- D-38 · 2026-10-18 · `pnpm run verify` includes DB tests (`test:db`), which drop and recreate only a database whose name contains "test".
