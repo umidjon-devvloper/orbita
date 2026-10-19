@@ -30,11 +30,16 @@ async function seedUser(email: string, password: string, status: "ACTIVE" | "DIS
   });
 }
 
+/**
+ * Per-test cleanup is deliberately narrow: AuditEvent rows are append-only
+ * (DB trigger, D-35), so wholesale wipes fail. Each test uses a unique
+ * email + its own Organization row, so leaving users and orgs in place
+ * between tests is safe. We only clear sessions, reset tokens and the
+ * in-memory mailer outbox.
+ */
 async function wipeUsers() {
   await prisma.session.deleteMany({});
   await prisma.passwordResetToken.deleteMany({});
-  await prisma.user.deleteMany({});
-  await prisma.organization.deleteMany({});
 }
 
 beforeAll(async () => {

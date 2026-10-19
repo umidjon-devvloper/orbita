@@ -5,6 +5,7 @@ import { hashPassword, needsRehash, verifyPassword } from "../../lib/password.js
 import type { RateLimit } from "../../lib/rate-limit.js";
 import { newSession, SESSION } from "../../lib/session.js";
 import { randomToken, sha256Hex } from "../../lib/tokens.js";
+import { writeAudit } from "../audit/writer.js";
 
 /**
  * Account lockout policy — matches `User.failedLogins` / `User.lockedUntil`
@@ -98,17 +99,18 @@ export async function login(ctx: AuthContext, input: LoginInput): Promise<LoginR
   // Successful auth — reset the counter, rotate the hash if parameters
   // have been bumped, and open a fresh session.
   const session = newSession(now);
-  await ctx.prisma.$transaction([
-    ctx.prisma.user.update({
+  const rehashed = needsRehash(user.passwordHash) ? await hashPassword(input.password) : null;
+  await ctx.prisma.$transaction(async (tx) => {
+    await tx.user.update({
       where: { id: user.id },
       data: {
         failedLogins: 0,
         lockedUntil: null,
         lastLoginAt: now,
-        ...(needsRehash(user.passwordHash) ? { passwordHash: await hashPassword(input.password) } : {}),
+        ...(rehashed !== null ? { passwordHash: rehashed } : {}),
       },
-    }),
-    ctx.prisma.session.create({
+    });
+    await tx.session.create({
       data: {
         userId: user.id,
         tokenHash: session.tokenHash,
@@ -118,8 +120,16 @@ export async function login(ctx: AuthContext, input: LoginInput): Promise<LoginR
         ip: input.ip ?? null,
         userAgent: input.userAgent ?? null,
       },
-    }),
-  ]);
+    });
+    await writeAudit(tx, {
+      orgId: user.orgId,
+      actorId: user.id,
+      action: "auth.login",
+      entityType: "User",
+      entityId: user.id,
+      ip: input.ip ?? null,
+    });
+  });
   ctx.loginLimit.reset(rlKey);
 
   return {
@@ -200,14 +210,22 @@ export async function confirmPasswordReset(ctx: AuthContext, input: ConfirmReset
     });
   }
   const hash = await hashPassword(input.newPassword);
-  await ctx.prisma.$transaction([
-    ctx.prisma.passwordResetToken.update({ where: { id: token.id }, data: { usedAt: now } }),
-    ctx.prisma.user.update({
+  await ctx.prisma.$transaction(async (tx) => {
+    await tx.passwordResetToken.update({ where: { id: token.id }, data: { usedAt: now } });
+    const user = await tx.user.update({
       where: { id: token.userId },
       data: { passwordHash: hash, failedLogins: 0, lockedUntil: null },
-    }),
-    ctx.prisma.session.deleteMany({ where: { userId: token.userId } }),
-  ]);
+      select: { id: true, orgId: true },
+    });
+    await tx.session.deleteMany({ where: { userId: token.userId } });
+    await writeAudit(tx, {
+      orgId: user.orgId,
+      actorId: user.id,
+      action: "auth.password_reset",
+      entityType: "User",
+      entityId: user.id,
+    });
+  });
 }
 
 export const SESSION_COOKIE = SESSION.COOKIE_NAME;

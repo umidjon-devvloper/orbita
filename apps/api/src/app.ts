@@ -5,8 +5,10 @@ import type { Config } from "./config.js";
 import type { PrismaClient } from "./db/client.js";
 import type { Mailer } from "./lib/mailer.js";
 import { createRateLimit, type RateLimit } from "./lib/rate-limit.js";
+import { auditRoutes } from "./modules/audit/routes.js";
 import { authRoutes } from "./modules/auth/routes.js";
 import type { AuthContext } from "./modules/auth/service.js";
+import { authzPlugin } from "./plugins/authz.js";
 import { cookiePlugin } from "./plugins/cookie.js";
 import { errorHandlerPlugin } from "./plugins/error-handler.js";
 import { prismaPlugin } from "./plugins/prisma.js";
@@ -58,6 +60,7 @@ export async function buildApp(opts: BuildAppOptions) {
   await app.register(prismaPlugin, {
     ...(opts.prisma !== undefined ? { client: opts.prisma } : { url: opts.config.DATABASE_URL }),
   });
+  await app.register(authzPlugin, { ...(opts.now !== undefined ? { now: opts.now } : {}) });
 
   // Login: five tries per IP+email per minute. Reset: three per email per hour.
   const loginLimit = opts.loginLimit ?? createRateLimit({ max: 5, windowMs: 60_000 });
@@ -77,6 +80,7 @@ export async function buildApp(opts: BuildAppOptions) {
     async (v1) => {
       await v1.register(healthRoutes);
       await v1.register(authRoutes({ ctx: authCtx, secureCookie }), { prefix: "/auth" });
+      await v1.register(auditRoutes, { prefix: "/audit" });
     },
     { prefix: "/api/v1" },
   );

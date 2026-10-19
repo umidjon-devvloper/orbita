@@ -20,6 +20,16 @@
   - `scripts/schema-engine-wasm.mjs` fallback for environments without engine binaries (D-33).
   - 18 DB tests against Postgres 16: every constraint rejects bad data; Prisma client smoke test (UUIDv7, BigInt UZS, timestamptz). Two NULL-bypass bugs found and fixed before commit (D-37).
 
+- **2.6 — RBAC + AuditEvent** (2026-10-19)
+  - Permission catalogue (28 keys) and default seeded roles (admin ORG, manager ORG_UNIT, employee OWN) already pure in `packages/domain`; this slice connects them to the DB.
+  - `loadActor(prisma, userId)` expands RoleAssignment → Role → RolePermission + OrgUnit.path into the `Actor` shape the domain `can()` function consumes.
+  - `seedDefaultRoles(prisma, orgId)` is idempotent — reruns rewrite the permission set so a catalogue change propagates without renaming the role.
+  - `app.requirePermission(permission, resource?)` is the one true authorization check: reads the session cookie, cleans expired rows, loads the actor once per request, calls `can()`. 401 for no/expired session, 403 for insufficient grant. Follow-up preHandlers reuse `req.actor` without a second DB round-trip (D-48).
+  - `writeAudit(tx, {...})` takes a Prisma transaction client so audit rows commit atomically with the business change — if either fails, both roll back (D-49).
+  - `/api/v1/audit` reader scoped to the actor's organization and gated by `audit:read`; `GET` only — append-only triggers from 2.3 (D-35) refuse any other verb at the DB level.
+  - Login success and password reset now write `auth.login` and `auth.password_reset` audit rows.
+  - 13 new integration tests: ORG/ORG_UNIT subtree/OWN scope matrix on two probe routes, loadActor for ACTIVE/DISABLED/unknown users, seedDefaultRoles idempotency, audit list scoped by org, audit refusal without permission, and a direct trigger test that confirms Prisma UPDATE/DELETE on AuditEvent raises `orbita:audit.appendOnly`. Full `pnpm run verify` green: 133 unit (100% domain coverage), 54 DB tests.
+
 - **2.5 — Auth** (2026-10-19)
   - Argon2id password hashing (`@node-rs/argon2`, OWASP 2024 interactive baseline: m=19 MiB, t=2, p=1); dummy-hash timing shield keeps "unknown email" and "wrong password" paths equal.
   - Server-side sessions: 32-byte random token in `orbita_sid` cookie (`HttpOnly; SameSite=Lax; Secure` in prod); DB stores only SHA-256 of the token plus a separate CSRF value (D-43). Idle 30 min sliding, absolute 12 h hard cap.
@@ -46,5 +56,5 @@
 
 ## Next
 
-- 2.6 — RBAC: permission catalogue (SECURITY.md §2), role seed, scope resolution (OWN/ORG_UNIT/ORG), `requirePermission` hook, SoD helpers; AuditEvent writer.
 - 2.7 — Web shell (Next.js): design tokens, light/dark, next-intl (uz/ru/en), app shell, login/forgot/reset pages, 401/403.
+- Phase 3 — configuration CRUD (org units, specialties/positions/competencies, career levels, salary bands, rubric builder).
