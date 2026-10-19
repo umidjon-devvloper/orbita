@@ -21,6 +21,7 @@ export default tseslint.config(
       "**/coverage/**",
       "**/node_modules/**",
       "**/.next/**",
+      "**/next-env.d.ts",
       "docs/**",
       "apps/api/src/generated/**",
     ],
@@ -77,4 +78,10 @@ export default tseslint.config(
   },
   { files: ["**/*.mjs", "**/*.js"], ...tseslint.configs.disableTypeChecked },
   { files: ["apps/*/scripts/**/*.mjs"], rules: { "no-console": "off" } },
+  {
+    // next-intl 4 marks setRequestLocale deprecated in favour of next/root-params
+    // (still experimental in Next 15.4). Keep the stable API for now.
+    files: ["apps/web/app/**/*.{ts,tsx}", "apps/web/lib/i18n/request.ts"],
+    rules: { "@typescript-eslint/no-deprecated": "off" },
+  },
 );

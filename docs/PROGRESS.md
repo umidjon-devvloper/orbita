@@ -20,6 +20,19 @@
   - `scripts/schema-engine-wasm.mjs` fallback for environments without engine binaries (D-33).
   - 18 DB tests against Postgres 16: every constraint rejects bad data; Prisma client smoke test (UUIDv7, BigInt UZS, timestamptz). Two NULL-bypass bugs found and fixed before commit (D-37).
 
+- **2.7 — Web shell (Next.js)** (2026-10-19)
+  - Next.js 15.5 App Router under `apps/web`; React 19; TypeScript strict; Tailwind v4 (CSS-first, no config file).
+  - Design tokens as CSS custom properties on `:root` with the two dark blocks (prefers-color-scheme + `data-theme="dark"`); `@theme inline` exposes them as Tailwind utilities. Palette: warm paper neutral + single terracotta accent, with separate good/warn/critical.
+  - `next-themes` with `attribute="data-theme"` and the inline script that prevents a flash of the wrong theme.
+  - `next-intl` v4 with locale segment routing (uz/ru/en, as-needed prefix); messages in `apps/web/messages/*.json` keyed identically across locales; middleware set up for the matcher.
+  - Fonts loaded via `next/font/google` (Fraunces for display, Inter for body, JetBrains Mono) and attached as CSS variables.
+  - UI primitives: Button (4 variants × 3 sizes), Input, Label, Field (ARIA-wired), Card family, Logo, ThemeToggle (3-way: light/dark/system), LocaleSwitcher.
+  - Pages: `/[locale]/login` (RHF form posting to `/api/v1/auth/login`, error codes mapped to i18n keys), `/[locale]/forgot` (identical reply shown either way), `/[locale]/reset` (10-char min, confirm match, redirect on success), `/[locale]/dashboard` (server-side `/auth/me`, 401 → login), `/[locale]/unauthorized`, `/[locale]/forbidden`, `/[locale]/not-found`.
+  - App shell: sticky top bar + persistent left rail with lucide icons; routes to Phase 3 modules are real `<Link>`s so clicks land on real 404s instead of fake tabs.
+  - API client with problem+json → `ApiError` mapping and server-side cookie forwarding (D-50).
+  - 11 new unit tests: identical message-key set across uz/ru/en; every leaf is a non-empty string; locale type guard; API client wrapping (headers, body, cookie forwarding, 204, problem+json → ApiError, non-problem bodies). Full `pnpm run verify` green: 144 unit, 54 DB tests.
+  - Dev server (`pnpm --filter @orbita/web dev`) verified end-to-end: `/`, `/en/login`, `/ru/login` render in their locales. Production `next build` has a known next-intl 4 + Next 15 interaction with the pages-router error chunk — deferred to Phase 9 polish, dev runtime unaffected.
+
 - **2.6 — RBAC + AuditEvent** (2026-10-19)
   - Permission catalogue (28 keys) and default seeded roles (admin ORG, manager ORG_UNIT, employee OWN) already pure in `packages/domain`; this slice connects them to the DB.
   - `loadActor(prisma, userId)` expands RoleAssignment → Role → RolePermission + OrgUnit.path into the `Actor` shape the domain `can()` function consumes.
@@ -56,5 +69,4 @@
 
 ## Next
 
-- 2.7 — Web shell (Next.js): design tokens, light/dark, next-intl (uz/ru/en), app shell, login/forgot/reset pages, 401/403.
 - Phase 3 — configuration CRUD (org units, specialties/positions/competencies, career levels, salary bands, rubric builder).

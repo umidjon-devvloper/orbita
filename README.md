@@ -2,7 +2,7 @@
 
 Employee assessment, career leveling, candidate evaluation, compensation recommendation and rewards platform.
 
-**Status:** Phase 1 (spec) done · Phase 2: tooling, domain engine, database, API skeleton, auth, and RBAC + audit (permission catalogue, scope-aware `requirePermission`, append-only AuditEvent writer, `/api/v1/audit` reader) done. Web app and business routes not started yet.
+**Status:** Phase 2 complete — tooling, domain engine, database, API skeleton, auth, RBAC + audit, and the Next.js web shell (design tokens, light/dark, uz/ru/en, login/forgot/reset, dashboard, 401/403, app shell with left rail). Phase 3 (configuration CRUD) next.
 
 ## Read first
 
@@ -28,9 +28,11 @@ pnpm db:generate                      # Prisma client
 pnpm db:migrate                       # apply migrations to DATABASE_URL
 pnpm run verify                       # lint + format + typecheck + unit (100 % domain coverage) + DB tests
 pnpm --filter @orbita/api dev         # start the Fastify API on http://127.0.0.1:4000 (watch mode)
+pnpm --filter @orbita/web dev         # start the Next.js web shell on http://127.0.0.1:3000
 ```
 
 Health checks: `GET /api/v1/healthz` (process is up) · `GET /api/v1/readyz` (DB is reachable).
+Login: open http://127.0.0.1:3000/uz/login, http://127.0.0.1:3000/ru/login or http://127.0.0.1:3000/en/login.
 
 `pnpm test` runs unit tests only; `pnpm test:db` runs database tests (recreates the `*_test` database).
 No access to binaries.prisma.sh? See "Migration tooling" in `docs/DATABASE_DESIGN.md`.

@@ -1,0 +1,83 @@
+{
+  "brand": {
+    "name": "Orbita",
+    "tagline": "Employee assessment and growth"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "employees": "Employees",
+    "candidates": "Candidates",
+    "assessments": "Assessments",
+    "rewards": "Rewards",
+    "settings": "Settings",
+    "signOut": "Sign out"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "locale": {
+    "label": "Language"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Continue with your email and password",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "forgot": "Forgot your password?",
+      "signingIn": "Signing in..."
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "subtitle": "Enter the email associated with your account",
+      "email": "Email",
+      "submit": "Send link",
+      "sent": "If an account exists, we've sent a reset link. Check your inbox.",
+      "back": "Back to sign in"
+    },
+    "reset": {
+      "title": "Set a new password",
+      "subtitle": "Your password must be at least 10 characters",
+      "password": "New password",
+      "confirm": "Confirm password",
+      "submit": "Change password",
+      "mismatch": "Passwords do not match",
+      "success": "Password changed. You can now sign in.",
+      "invalidToken": "This link is invalid or has expired.",
+      "missingToken": "No token in the link."
+    },
+    "errors": {
+      "required": "Required field",
+      "shortPassword": "Password must be at least 10 characters",
+      "invalidEmail": "Invalid email format",
+      "invalidCredentials": "Email or password is incorrect",
+      "locked": "Account is temporarily locked. Try again later.",
+      "rateLimited": "Too many attempts. Try again in a minute.",
+      "unknown": "Unexpected error. Please try again."
+    }
+  },
+  "status": {
+    "unauthenticated": {
+      "title": "Sign-in required",
+      "detail": "You need to sign in to view this page.",
+      "action": "Go to sign in"
+    },
+    "forbidden": {
+      "title": "Access denied",
+      "detail": "You do not have permission for this action. If this is a mistake, contact your administrator.",
+      "action": "Back to dashboard"
+    },
+    "notFound": {
+      "title": "Page not found",
+      "detail": "The page you were looking for does not exist or has moved.",
+      "action": "Back to dashboard"
+    }
+  },
+  "footer": {
+    "madeIn": "Tashkent"
+  }
+}
