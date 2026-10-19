@@ -2,7 +2,7 @@
 
 Employee assessment, career leveling, candidate evaluation, compensation recommendation and rewards platform.
 
-**Status:** Phase 1 (spec) done · Phase 2: tooling, domain engine, database (schema, migrations, DB-level constraints) and API skeleton (Fastify, config, logger, request id, problem+json errors, health endpoints) done. Auth, business routes and web app not started yet.
+**Status:** Phase 1 (spec) done · Phase 2: tooling, domain engine, database (schema, migrations, DB-level constraints), API skeleton (Fastify, config, logger, request id, problem+json errors, health endpoints) and auth (Argon2id, sessions, rate limits, lockout, password reset) done. RBAC + audit, business routes and web app not started yet.
 
 ## Read first
 

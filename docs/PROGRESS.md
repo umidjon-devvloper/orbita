@@ -20,6 +20,16 @@
   - `scripts/schema-engine-wasm.mjs` fallback for environments without engine binaries (D-33).
   - 18 DB tests against Postgres 16: every constraint rejects bad data; Prisma client smoke test (UUIDv7, BigInt UZS, timestamptz). Two NULL-bypass bugs found and fixed before commit (D-37).
 
+- **2.5 — Auth** (2026-10-19)
+  - Argon2id password hashing (`@node-rs/argon2`, OWASP 2024 interactive baseline: m=19 MiB, t=2, p=1); dummy-hash timing shield keeps "unknown email" and "wrong password" paths equal.
+  - Server-side sessions: 32-byte random token in `orbita_sid` cookie (`HttpOnly; SameSite=Lax; Secure` in prod); DB stores only SHA-256 of the token plus a separate CSRF value (D-43). Idle 30 min sliding, absolute 12 h hard cap.
+  - Rate limits: in-memory sliding window — login 5/min per IP+email, reset 3/hour per email (D-44). Clean counter on successful login.
+  - Account lockout: 5 consecutive misses → `lockedUntil = now + 15 min`, counter cleared; distinct error code `orbita:auth:locked` (423).
+  - Password reset: single-use token (SHA-256-stored, 30 min TTL), 10-char minimum new password, response identical whether email exists or not, confirm revokes every existing session for the user.
+  - Mailer: `Mailer` interface with `ConsoleMailer` (tests, outbox) and `SmtpMailer` (nodemailer → Mailpit) implementations.
+  - Routes under `/api/v1/auth`: `POST /login`, `POST /logout`, `GET /me`, `POST /password-reset/{request,confirm}`.
+  - 22 new unit tests (`password`, `tokens`, `session`, `rate-limit`, `mailer`) and 15 integration tests (`auth.db.test.ts`) — happy path, invalid-credentials uniformity, DISABLED account, lockout after 5 misses, rate-limited, cookie flags, expired session cleanup, logout, reset single-use, reset revokes sessions, expired token. Full `pnpm run verify` green: 133 unit tests (100% domain coverage), 41 DB tests.
+
 - **2.4 — API skeleton** (2026-10-19)
   - Fastify 5 + Zod type provider; `buildApp()` is a pure factory (no port, no `process.env`), `server.ts` is the only entry point that reads env and listens.
   - `config.ts`: Zod env schema with defaults, reports every failing key in one error (D-39).
@@ -36,5 +46,5 @@
 
 ## Next
 
-- 2.5 — Auth: sessions (server-side, SHA-256 hashed), CSRF synchronizer token, Argon2id password hashing, rate limits, password reset with ConsoleMailer/Mailpit.
-- 2.6 — RBAC + AuditEvent writer.
+- 2.6 — RBAC: permission catalogue (SECURITY.md §2), role seed, scope resolution (OWN/ORG_UNIT/ORG), `requirePermission` hook, SoD helpers; AuditEvent writer.
+- 2.7 — Web shell (Next.js): design tokens, light/dark, next-intl (uz/ru/en), app shell, login/forgot/reset pages, 401/403.

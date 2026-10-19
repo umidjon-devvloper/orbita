@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
+import { createSmtpMailer } from "./lib/mailer.js";
 import { createLogger } from "./logger.js";
 
 /**
@@ -13,7 +14,12 @@ import { createLogger } from "./logger.js";
 async function main(): Promise<void> {
   const config = loadConfig();
   const logger = createLogger(config);
-  const app = await buildApp({ config, logger });
+  const mailer = createSmtpMailer({
+    host: config.SMTP_HOST,
+    port: config.SMTP_PORT,
+    from: config.SMTP_FROM,
+  });
+  const app = await buildApp({ config, logger, mailer });
 
   const close = async (signal: string): Promise<void> => {
     logger.info({ signal }, "shutting down");

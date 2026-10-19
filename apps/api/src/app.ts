@@ -2,11 +2,16 @@ import Fastify from "fastify";
 import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from "fastify-type-provider-zod";
 import type { Logger } from "pino";
 import type { Config } from "./config.js";
+import type { PrismaClient } from "./db/client.js";
+import type { Mailer } from "./lib/mailer.js";
+import { createRateLimit, type RateLimit } from "./lib/rate-limit.js";
+import { authRoutes } from "./modules/auth/routes.js";
+import type { AuthContext } from "./modules/auth/service.js";
+import { cookiePlugin } from "./plugins/cookie.js";
 import { errorHandlerPlugin } from "./plugins/error-handler.js";
 import { prismaPlugin } from "./plugins/prisma.js";
 import { genReqId, requestIdPlugin } from "./plugins/request-id.js";
 import { healthRoutes } from "./routes/health.js";
-import type { PrismaClient } from "./db/client.js";
 
 export type OrbitaApp = Awaited<ReturnType<typeof buildApp>>;
 
@@ -15,6 +20,12 @@ export interface BuildAppOptions {
   logger: Logger;
   /** Pre-built client for tests. Production passes a URL and lets the plugin own the lifecycle. */
   prisma?: PrismaClient;
+  mailer: Mailer;
+  /** Overridable clock for tests. */
+  now?: () => Date;
+  /** Pre-built rate limiters for tests (so they can be inspected and cleared). */
+  loginLimit?: RateLimit;
+  resetLimit?: RateLimit;
 }
 
 /**
@@ -24,8 +35,9 @@ export interface BuildAppOptions {
  * Plugin order matters:
  *   1. error-handler sets handlers early so later plugin errors are shaped;
  *   2. request-id attaches request ids used by the error handler for `instance`;
- *   3. prisma decorates the app for routes that need the DB;
- *   4. routes are registered under `/api/v1`.
+ *   3. cookie parses signed cookies before any route that reads them;
+ *   4. prisma decorates the app for routes that need the DB;
+ *   5. routes are registered under `/api/v1`.
  */
 export async function buildApp(opts: BuildAppOptions) {
   const app = Fastify({
@@ -42,13 +54,29 @@ export async function buildApp(opts: BuildAppOptions) {
 
   await app.register(errorHandlerPlugin);
   await app.register(requestIdPlugin);
+  await app.register(cookiePlugin, { secret: opts.config.SESSION_SECRET });
   await app.register(prismaPlugin, {
     ...(opts.prisma !== undefined ? { client: opts.prisma } : { url: opts.config.DATABASE_URL }),
   });
 
+  // Login: five tries per IP+email per minute. Reset: three per email per hour.
+  const loginLimit = opts.loginLimit ?? createRateLimit({ max: 5, windowMs: 60_000 });
+  const resetLimit = opts.resetLimit ?? createRateLimit({ max: 3, windowMs: 60 * 60_000 });
+  const authCtx: AuthContext = {
+    prisma: app.prisma,
+    mailer: opts.mailer,
+    loginLimit,
+    resetLimit,
+    now: opts.now ?? (() => new Date()),
+    brandName: opts.config.BRAND_NAME,
+    appUrl: opts.config.APP_URL,
+  };
+  const secureCookie = opts.config.NODE_ENV === "production";
+
   await app.register(
     async (v1) => {
       await v1.register(healthRoutes);
+      await v1.register(authRoutes({ ctx: authCtx, secureCookie }), { prefix: "/auth" });
     },
     { prefix: "/api/v1" },
   );

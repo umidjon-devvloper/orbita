@@ -6,6 +6,7 @@ import { createLogger } from "./logger.js";
 import { createPrisma, type PrismaClient } from "./db/client.js";
 import { TEST_URL } from "./db/test-db.js";
 import { Errors } from "./errors.js";
+import { createConsoleMailer } from "./lib/mailer.js";
 
 let app: OrbitaApp;
 let prisma: PrismaClient;
@@ -18,7 +19,7 @@ beforeAll(async () => {
   });
   const logger = createLogger(config);
   prisma = createPrisma(TEST_URL);
-  app = await buildApp({ config, logger, prisma });
+  app = await buildApp({ config, logger, prisma, mailer: createConsoleMailer() });
 
   // A tiny route added only in the test exercises the error handler.
   app.get("/__boom", () => {

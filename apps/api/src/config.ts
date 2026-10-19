@@ -16,6 +16,9 @@ const Schema = z.object({
   HOST: z.string().default("127.0.0.1"),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   AI_PROVIDER: z.enum(["mock", "anthropic"]).default("mock"),
+  SMTP_HOST: z.string().default("localhost"),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(1025),
+  SMTP_FROM: z.string().default("Orbita <no-reply@orbita.local>"),
 });
 
 export type Config = z.infer<typeof Schema>;
