@@ -20,11 +20,21 @@
   - `scripts/schema-engine-wasm.mjs` fallback for environments without engine binaries (D-33).
   - 18 DB tests against Postgres 16: every constraint rejects bad data; Prisma client smoke test (UUIDv7, BigInt UZS, timestamptz). Two NULL-bypass bugs found and fixed before commit (D-37).
 
+- **2.4 — API skeleton** (2026-10-19)
+  - Fastify 5 + Zod type provider; `buildApp()` is a pure factory (no port, no `process.env`), `server.ts` is the only entry point that reads env and listens.
+  - `config.ts`: Zod env schema with defaults, reports every failing key in one error (D-39).
+  - `logger.ts`: pino with path-based redaction of auth headers, cookies, CSRF token, Set-Cookie and password/token/sessionId fields; silent in test unless `LOG_LEVEL` is bumped.
+  - `plugins/request-id.ts`: adopts a safe inbound `X-Request-Id` (printable ASCII, ≤128 chars), mints UUID v4 otherwise; echoed on every response (D-40).
+  - `plugins/error-handler.ts`: single `setErrorHandler` turns `OrbitaError`, `ZodError`, Fastify's own validation errors and anything else into RFC 9457 `application/problem+json` with `orbita:<code>` and the request id as `instance`; 500 never leaks `detail` (D-41).
+  - `plugins/prisma.ts`: decorates the app with one `PrismaClient`; tests inject their own, prod builds from `DATABASE_URL` and disconnects on `onClose`.
+  - `/api/v1/healthz` (liveness, no DB) and `/api/v1/readyz` (503 if `SELECT 1` fails).
+  - 20 new tests: 12 unit (`config`, `errors`) + 8 integration against Postgres (`app.db.test.ts`) covering health, request-id adopt/reject, 404/problem+json, OrbitaError mapping, generic throw → 500 with no detail, ZodError → 400 with field paths. Full `pnpm run verify` green: 111 unit tests, 100 % domain coverage, 26 DB tests.
+
 ## In progress
 
 - Nothing.
 
 ## Next
 
-- 2.4 — API skeleton: config (Zod), pino with request ids, problem+json errors with `orbita:<code>` mapping, `/healthz`, `/readyz`.
-- 2.5 — Auth: sessions, CSRF, rate limits, password reset.
+- 2.5 — Auth: sessions (server-side, SHA-256 hashed), CSRF synchronizer token, Argon2id password hashing, rate limits, password reset with ConsoleMailer/Mailpit.
+- 2.6 — RBAC + AuditEvent writer.

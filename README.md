@@ -2,7 +2,7 @@
 
 Employee assessment, career leveling, candidate evaluation, compensation recommendation and rewards platform.
 
-**Status:** Phase 1 (spec) done · Phase 2: tooling, domain engine and database (schema, migrations, DB-level constraints) done. API routes and web app not started yet.
+**Status:** Phase 1 (spec) done · Phase 2: tooling, domain engine, database (schema, migrations, DB-level constraints) and API skeleton (Fastify, config, logger, request id, problem+json errors, health endpoints) done. Auth, business routes and web app not started yet.
 
 ## Read first
 
@@ -27,7 +27,10 @@ docker compose up -d                  # Postgres 16 + Mailpit
 pnpm db:generate                      # Prisma client
 pnpm db:migrate                       # apply migrations to DATABASE_URL
 pnpm run verify                       # lint + format + typecheck + unit (100 % domain coverage) + DB tests
+pnpm --filter @orbita/api dev         # start the Fastify API on http://127.0.0.1:4000 (watch mode)
 ```
+
+Health checks: `GET /api/v1/healthz` (process is up) · `GET /api/v1/readyz` (DB is reachable).
 
 `pnpm test` runs unit tests only; `pnpm test:db` runs database tests (recreates the `*_test` database).
 No access to binaries.prisma.sh? See "Migration tooling" in `docs/DATABASE_DESIGN.md`.

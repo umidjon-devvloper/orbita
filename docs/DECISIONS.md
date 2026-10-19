@@ -40,3 +40,7 @@ One line each: ID · date · decision — reason.
 - D-36 · 2026-10-18 · Rubric version locks itself in the DB when the first assessment references it (AFTER INSERT trigger) — the lock cannot be forgotten by application code.
 - D-37 · 2026-10-18 · CHECK expressions that can be NULL are wrapped in `IS TRUE` (NULL passes a CHECK).
 - D-38 · 2026-10-18 · `pnpm run verify` includes DB tests (`test:db`), which drop and recreate only a database whose name contains "test".
+- D-39 · 2026-10-19 · Env parsing: single `loadConfig()` returns a Zod-validated `Config` or throws listing every failing key — fail-fast at boot, no partial-config bugs, zero reads of `process.env` elsewhere.
+- D-40 · 2026-10-19 · `X-Request-Id`: adopt the inbound header only when it matches `/^[\x20-\x7E]{1,128}$/`, otherwise mint UUID v4. Keeps logs correlatable across proxies but refuses control chars and giant strings that would poison log lines or GC.
+- D-41 · 2026-10-19 · Error contract: every API error is RFC 9457 `application/problem+json` with a stable `code: orbita:<category>:<name>` (also the i18n key) and the request id in `instance`; 500 never carries `detail` so internal messages never reach the client.
+- D-42 · 2026-10-19 · `buildApp()` is a pure factory — tests inject a `PrismaClient` and `app.inject()`, production calls `app.listen()`. No module may read `process.env` after `server.ts`.
