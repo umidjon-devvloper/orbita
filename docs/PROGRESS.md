@@ -20,6 +20,16 @@
   - `scripts/schema-engine-wasm.mjs` fallback for environments without engine binaries (D-33).
   - 18 DB tests against Postgres 16: every constraint rejects bad data; Prisma client smoke test (UUIDv7, BigInt UZS, timestamptz). Two NULL-bypass bugs found and fixed before commit (D-37).
 
+- **3.5 — Rubric builder** (2026-10-20)
+  - `Rubric` CRUD under `/api/v1/rubrics`: unique per `(specialty, purpose)`. Creation spawns a fresh DRAFT v1 in the same transaction.
+  - `RubricVersion` lifecycle: `DRAFT` → `ACTIVE` → `RETIRED`. Only `DRAFT` is editable; the service refuses non-DRAFT edits upfront, with the DB trigger (D-36) as the backstop once an assessment references the version.
+  - **Clone-on-edit**: `POST /versions/:id/clone` copies every criterion into a new DRAFT with the next sequential `version` number — the admin edits the clone, leaving the ACTIVE version untouched.
+  - **Criteria**: `PUT /versions/:id/criteria` upserts a criterion (keyed by rubric-version + key) with `weightBp` 0–10000, scoring method (`AUTO_QUIZ` / `MANUAL` / `EVIDENCE_METRIC`), optional metric JSON, gate flag + score, evidence requirements, sort order. `DELETE` on a DRAFT removes it.
+  - **Activation** calls the domain's pure `validateRubric()` (weights sum to 10000, no duplicate measure reads, gate scores present, metrics match method, …). Issues come back as a 400 with every reason listed; a successful validate retires any prior `ACTIVE` version in the same transaction.
+  - Audit: `rubric.created`, `rubric_version.cloned` / `.activated`, `rubric_criterion.created` / `.updated` / `.removed`.
+  - 7 new integration tests: fresh DRAFT v1, duplicate `(specialty, purpose)` 409, non-DRAFT edit 409, weights-not-sum-to-10000 refusal, successful activate → previous ACTIVE RETIRED, clone copies criteria to v2 DRAFT, gate without `gateMinScore` refused.
+  - `pnpm run verify` green: 144 unit + 90 DB tests.
+
 - **3.2+3.3+3.4 — Catalog, career levels, salary bands** (2026-10-20)
   - 3.2 Catalog: Specialty, Position, Competency, PositionCompetency CRUD. Localized name (`{ uz required, ru?, en? }`) with uz required (D-23); PATCH merges locale-wise so a ru-only edit never drops uz. Position belongs to a Specialty, PositionCompetency carries importance 1–3. Soft-disable via `isActive`.
   - 3.3 Career levels + requirements: create, reorder (two-phase rank rewrite inside one tx so the partial unique `(orgId, rank) where isActive` is never transiently violated), approve, enable/disable. `LevelRequirement` upsert keyed by `(levelId, specialtyId, competencyId)` with 0–10000 hundredths minScore and `isGate` flag.
@@ -93,5 +103,5 @@
 
 ## Next
 
-- 3.5 — Rubric builder: versions, criteria, weights (percent ↔ bp), metric editor, clone-on-edit.
 - Phase 4 — employee assessment cycle (periods, evidence, scoring, review, appeals).
+- Admin UI for 3.2–3.5 (catalog, levels, salary bands, rubric builder).

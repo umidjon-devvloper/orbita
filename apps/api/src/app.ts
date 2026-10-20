@@ -11,6 +11,7 @@ import type { AuthContext } from "./modules/auth/service.js";
 import { catalogRoutes } from "./modules/catalog/routes.js";
 import { levelRoutes } from "./modules/levels/routes.js";
 import { orgUnitRoutes } from "./modules/org/routes.js";
+import { rubricRoutes } from "./modules/rubrics/routes.js";
 import { salaryBandRoutes } from "./modules/salary/routes.js";
 import { userRoutes } from "./modules/users/routes.js";
 import { authzPlugin } from "./plugins/authz.js";
@@ -91,6 +92,7 @@ export async function buildApp(opts: BuildAppOptions) {
       await v1.register(catalogRoutes, { prefix: "/catalog" });
       await v1.register(levelRoutes, { prefix: "/levels" });
       await v1.register(salaryBandRoutes, { prefix: "/salary-bands" });
+      await v1.register(rubricRoutes, { prefix: "/rubrics" });
     },
     { prefix: "/api/v1" },
   );
