@@ -10,7 +10,9 @@ import { authRoutes } from "./modules/auth/routes.js";
 import type { AuthContext } from "./modules/auth/service.js";
 import { catalogRoutes } from "./modules/catalog/routes.js";
 import { levelRoutes } from "./modules/levels/routes.js";
+import { evidenceRoutes } from "./modules/evidence/routes.js";
 import { orgUnitRoutes } from "./modules/org/routes.js";
+import { periodRoutes } from "./modules/periods/routes.js";
 import { rubricRoutes } from "./modules/rubrics/routes.js";
 import { salaryBandRoutes } from "./modules/salary/routes.js";
 import { userRoutes } from "./modules/users/routes.js";
@@ -93,6 +95,8 @@ export async function buildApp(opts: BuildAppOptions) {
       await v1.register(levelRoutes, { prefix: "/levels" });
       await v1.register(salaryBandRoutes, { prefix: "/salary-bands" });
       await v1.register(rubricRoutes, { prefix: "/rubrics" });
+      await v1.register(periodRoutes, { prefix: "/periods" });
+      await v1.register(evidenceRoutes, { prefix: "/evidence" });
     },
     { prefix: "/api/v1" },
   );

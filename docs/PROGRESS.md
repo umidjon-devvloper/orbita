@@ -20,6 +20,14 @@
   - `scripts/schema-engine-wasm.mjs` fallback for environments without engine binaries (D-33).
   - 18 DB tests against Postgres 16: every constraint rejects bad data; Prisma client smoke test (UUIDv7, BigInt UZS, timestamptz). Two NULL-bypass bugs found and fixed before commit (D-37).
 
+- **4.1 + 4.2 — Performance periods, evidence submission + verification** (2026-10-20)
+  - **Periods** (`/api/v1/periods`): CRUD scoped to the actor's org; non-overlap enforced (`aStart ≤ bEnd ∧ bStart ≤ aEnd`); state machine `OPEN → CLOSED → FINALIZED`, skips refused with 409 `orbita:period:invalid_transition`. Dates stored as `date` columns, parsed from `YYYY-MM-DD`.
+  - **Evidence** (`/api/v1/evidence`): submit (admin/manager on behalf — `employee:manage`), verify, reject with reason. Lifecycle `SUBMITTED → VERIFIED | REJECTED` matches the domain workflow. Separation of duties enforced server-side: the submitter is refused on verify/reject of their own evidence (`orbita:evidence:sod_self`, 403), the DB-level trigger is not aware of the actor and this is the first line of defence.
+  - Submissions to a non-`OPEN` period refused (`orbita:evidence:period_closed`, 409). Unknown types refused at the schema layer.
+  - Service fee / government fee stored as BigInt UZS; revenue rule enforced at scoring time (D-27). Metrics JSON pass-through, validated later per type.
+  - Audit (D-49): `period.created`, `period.closed`/`.open`/`.finalized`, `evidence.submitted`/`.verified`/`.rejected`.
+  - 10 new integration tests: period overlap refusal, adjacent allowed, state-machine skip refused, endsOn validation; evidence submit + list filter, non-OPEN refusal, unknown type, verify by other sets verifier/time, self-verify SoD, reject requires reason + 409 on second reject. Full `pnpm run verify` green: 144 unit + 100 DB tests.
+
 - **3.5 — Rubric builder** (2026-10-20)
   - `Rubric` CRUD under `/api/v1/rubrics`: unique per `(specialty, purpose)`. Creation spawns a fresh DRAFT v1 in the same transaction.
   - `RubricVersion` lifecycle: `DRAFT` → `ACTIVE` → `RETIRED`. Only `DRAFT` is editable; the service refuses non-DRAFT edits upfront, with the DB trigger (D-36) as the backstop once an assessment references the version.
@@ -103,5 +111,8 @@
 
 ## Next
 
-- Phase 4 — employee assessment cycle (periods, evidence, scoring, review, appeals).
-- Admin UI for 3.2–3.5 (catalog, levels, salary bands, rubric builder).
+- 4.3 — Performance assessment scoring (evidence auto-allocation, metric computation, INCOMPLETE reasons, calcSnapshot — EX1/EX4/EX6).
+- 4.4 — Review workflow (approve/reject state machine, immutable approved rows).
+- 4.5 — Appeals + reassessment chain.
+- 4.6 — Level review + promotion recommendation (EX8).
+- Admin UI for 3.2–3.5 + 4.1–4.2.
