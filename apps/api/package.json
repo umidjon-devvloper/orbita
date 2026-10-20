@@ -8,6 +8,7 @@
     "dev": "node --watch --import tsx src/server.ts",
     "start": "node --import tsx src/server.ts",
     "db:generate": "prisma generate",
+    "postinstall": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
