@@ -20,6 +20,14 @@
   - `scripts/schema-engine-wasm.mjs` fallback for environments without engine binaries (D-33).
   - 18 DB tests against Postgres 16: every constraint rejects bad data; Prisma client smoke test (UUIDv7, BigInt UZS, timestamptz). Two NULL-bypass bugs found and fixed before commit (D-37).
 
+- **3.2+3.3+3.4 — Catalog, career levels, salary bands** (2026-10-20)
+  - 3.2 Catalog: Specialty, Position, Competency, PositionCompetency CRUD. Localized name (`{ uz required, ru?, en? }`) with uz required (D-23); PATCH merges locale-wise so a ru-only edit never drops uz. Position belongs to a Specialty, PositionCompetency carries importance 1–3. Soft-disable via `isActive`.
+  - 3.3 Career levels + requirements: create, reorder (two-phase rank rewrite inside one tx so the partial unique `(orgId, rank) where isActive` is never transiently violated), approve, enable/disable. `LevelRequirement` upsert keyed by `(levelId, specialtyId, competencyId)` with 0–10000 hundredths minScore and `isGate` flag.
+  - 3.4 Salary bands: create with `(positionId, levelId, [effectiveFrom..effectiveTo])` window; overlap detector (`aStart <= bEnd ∧ bStart <= aEnd`, open-ended via `+∞`) refuses conflicts; `close()` extends `effectiveTo`; `approve()` lifts UNAPPROVED. BigInt UZS, min ≤ max validation.
+  - Shared helpers: `LocalizedTextSchema` (zod), `localizedPick(text, locale)` with uz fallback, `orgIdOf(req)` and `auditFrom(req)` extracted so every CRUD module reads context the same way.
+  - Every mutation writes AuditEvent inside the business transaction (D-49): `specialty.*`, `position.*`, `position_competency.*`, `competency.*`, `career_level.*`, `level_requirement.*`, `salary_band.*`.
+  - 12 new integration tests: localized create + PATCH merge, duplicate-key 409, non-admin 403, position↔competency binding, level reorder rewrite (ranks 1..n after reverse), approval flip, requirement range validation, salary overlap refusal, adjacent windows allowed, min>max rejected, band close. Full `pnpm run verify` green: 144 unit + 83 DB tests.
+
 - **3.1-ui — Admin pages for org units and users** (2026-10-20)
   - `/[locale]/settings/org-units` — tree in path order with depth-based indentation, inline create + rename, delete with confirm. Server component (RSC) loads under the viewer's scope; the client component owns every mutation and reloads from the API after each one.
   - `/[locale]/settings/users` — table with status badge, role chips (shown as `role · /path/`), inline role assignment (role picker auto-shows the unit dropdown only when the role has ORG_UNIT scope), create form with locale picker, status toggle (disabled for the viewer's own row — the API also enforces this).
@@ -85,5 +93,5 @@
 
 ## Next
 
-- 3.2 — Specialties, positions, competencies with localized names (uz/ru/en, uz fallback).
-- 3.3 — Career levels + level requirements + reorder/disable.
+- 3.5 — Rubric builder: versions, criteria, weights (percent ↔ bp), metric editor, clone-on-edit.
+- Phase 4 — employee assessment cycle (periods, evidence, scoring, review, appeals).

@@ -8,7 +8,10 @@ import { createRateLimit, type RateLimit } from "./lib/rate-limit.js";
 import { auditRoutes } from "./modules/audit/routes.js";
 import { authRoutes } from "./modules/auth/routes.js";
 import type { AuthContext } from "./modules/auth/service.js";
+import { catalogRoutes } from "./modules/catalog/routes.js";
+import { levelRoutes } from "./modules/levels/routes.js";
 import { orgUnitRoutes } from "./modules/org/routes.js";
+import { salaryBandRoutes } from "./modules/salary/routes.js";
 import { userRoutes } from "./modules/users/routes.js";
 import { authzPlugin } from "./plugins/authz.js";
 import { cookiePlugin } from "./plugins/cookie.js";
@@ -85,6 +88,9 @@ export async function buildApp(opts: BuildAppOptions) {
       await v1.register(auditRoutes, { prefix: "/audit" });
       await v1.register(orgUnitRoutes, { prefix: "/org-units" });
       await v1.register(userRoutes, { prefix: "/users" });
+      await v1.register(catalogRoutes, { prefix: "/catalog" });
+      await v1.register(levelRoutes, { prefix: "/levels" });
+      await v1.register(salaryBandRoutes, { prefix: "/salary-bands" });
     },
     { prefix: "/api/v1" },
   );
