@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+/**
+ * Orbita design tokens. Named by role, not by hue, so a theme swap only
+ * rewrites values. Light values live on bare `:root`; the two dark blocks
+ * redefine the same tokens so both OS-dark and an explicit toggle land on
+ * the same palette.
+ *
+ * Palette direction: a warm paper neutral with a single terracotta accent.
+ * Semantic colours (good / warning / critical) stay separate from the
+ * accent so a severity never clashes with brand hue.
+ */
+:root {
+  --bg: #f8f6f0;
+  --surface: #ffffff;
+  --surface-sunken: #f1efe8;
+  --fg: #1a1d26;
+  --fg-muted: #51576b;
+  --fg-dim: #8188a0;
+  --rule: #e4e1d8;
+  --rule-strong: #d4d0c3;
+  --accent: #c25a2a;
+  --accent-fg: #ffffff;
+  --accent-soft: #f3e0d4;
+  --good: #2f6b4b;
+  --good-soft: #e0ecde;
+  --warn: #a0620b;
+  --warn-soft: #f4e7c7;
+  --critical: #b2302b;
+  --critical-soft: #f4dad7;
+  --focus: #4e8bc9;
+
+  --radius: 8px;
+  --radius-sm: 4px;
+  --radius-lg: 14px;
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Inter", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141620;
+    --surface: #1b1e2a;
+    --surface-sunken: #10121a;
+    --fg: #ebe8df;
+    --fg-muted: #a9afc4;
+    --fg-dim: #717790;
+    --rule: #272a37;
+    --rule-strong: #353946;
+    --accent: #e89160;
+    --accent-fg: #141620;
+    --accent-soft: #3b2a21;
+    --good: #7cc296;
+    --good-soft: #203027;
+    --warn: #e2b06b;
+    --warn-soft: #332715;
+    --critical: #e97975;
+    --critical-soft: #3b1f1e;
+    --focus: #83b4e3;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141620;
+  --surface: #1b1e2a;
+  --surface-sunken: #10121a;
+  --fg: #ebe8df;
+  --fg-muted: #a9afc4;
+  --fg-dim: #717790;
+  --rule: #272a37;
+  --rule-strong: #353946;
+  --accent: #e89160;
+  --accent-fg: #141620;
+  --accent-soft: #3b2a21;
+  --good: #7cc296;
+  --good-soft: #203027;
+  --warn: #e2b06b;
+  --warn-soft: #332715;
+  --critical: #e97975;
+  --critical-soft: #3b1f1e;
+  --focus: #83b4e3;
+  color-scheme: dark;
+}
+
+/* Expose the tokens to Tailwind v4's utility classes (bg-surface, text-fg,
+   border-rule, etc.). Each line here produces one utility family. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-dim: var(--fg-dim);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-critical: var(--critical);
+  --color-critical-soft: var(--critical-soft);
+
+  --radius-sm: var(--radius-sm);
+  --radius: var(--radius);
+  --radius-lg: var(--radius-lg);
+
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+}
+
+html {
+  background: var(--bg);
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

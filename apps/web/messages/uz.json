@@ -1,0 +1,126 @@
+{
+  "brand": {
+    "name": "Orbita",
+    "tagline": "Xodimlarni baholash va rivojlantirish"
+  },
+  "nav": {
+    "dashboard": "Boshqaruv paneli",
+    "employees": "Xodimlar",
+    "candidates": "Nomzodlar",
+    "assessments": "Baholashlar",
+    "rewards": "Mukofotlar",
+    "settings": "Sozlamalar",
+    "signOut": "Chiqish"
+  },
+  "theme": {
+    "label": "Mavzu",
+    "light": "Yorug'",
+    "dark": "Qorong'u",
+    "system": "Tizim"
+  },
+  "locale": {
+    "label": "Til"
+  },
+  "auth": {
+    "login": {
+      "title": "Hisobga kiring",
+      "subtitle": "Email va parolingiz bilan davom eting",
+      "email": "Elektron pochta",
+      "password": "Parol",
+      "submit": "Kirish",
+      "forgot": "Parolni unutdingizmi?",
+      "signingIn": "Kirilyapti..."
+    },
+    "forgot": {
+      "title": "Parolni tiklash",
+      "subtitle": "Hisobingiz bilan bog'liq elektron pochtani kiriting",
+      "email": "Elektron pochta",
+      "submit": "Havolani yuborish",
+      "sent": "Agar hisob mavjud bo'lsa, parolni tiklash havolasi yuborildi. Pochtangizni tekshiring.",
+      "back": "Kirish sahifasiga qaytish"
+    },
+    "reset": {
+      "title": "Yangi parol belgilash",
+      "subtitle": "Parol kamida 10 ta belgidan iborat bo'lishi kerak",
+      "password": "Yangi parol",
+      "confirm": "Parolni tasdiqlang",
+      "submit": "Parolni o'zgartirish",
+      "mismatch": "Parollar mos kelmaydi",
+      "success": "Parol o'zgartirildi. Endi kirishingiz mumkin.",
+      "invalidToken": "Havola noto'g'ri yoki muddati tugagan.",
+      "missingToken": "Havoladagi token topilmadi."
+    },
+    "errors": {
+      "required": "Majburiy maydon",
+      "shortPassword": "Parol kamida 10 ta belgidan iborat bo'lishi kerak",
+      "invalidEmail": "Elektron pochta formati noto'g'ri",
+      "invalidCredentials": "Elektron pochta yoki parol noto'g'ri",
+      "locked": "Hisob vaqtincha blokirovkada. Keyinroq urinib ko'ring.",
+      "rateLimited": "Juda ko'p urinish. Bir daqiqadan so'ng qayta urinib ko'ring.",
+      "unknown": "Kutilmagan xato. Qayta urinib ko'ring."
+    }
+  },
+  "status": {
+    "unauthenticated": {
+      "title": "Kirish talab qilinadi",
+      "detail": "Bu sahifani ko'rish uchun avval tizimga kiring.",
+      "action": "Kirish sahifasiga o'tish"
+    },
+    "forbidden": {
+      "title": "Ruxsat yo'q",
+      "detail": "Ushbu amal uchun sizda huquq yetarli emas. Agar bu xato bo'lsa, administrator bilan bog'laning.",
+      "action": "Boshqaruv paneliga qaytish"
+    },
+    "notFound": {
+      "title": "Sahifa topilmadi",
+      "detail": "Siz izlagan sahifa mavjud emas yoki ko'chirilgan.",
+      "action": "Boshqaruv paneliga qaytish"
+    }
+  },
+  "footer": {
+    "madeIn": "Toshkent"
+  },
+  "settings": {
+    "orgUnits": {
+      "title": "Tashkiliy birliklar",
+      "subtitle": "Daraxt. Yangi tugunlar faqat ota tugun ichida yaratiladi.",
+      "newUnit": "Yangi birlik",
+      "name": "Nomi",
+      "parent": "Ota tugun",
+      "rootOption": "— Ildiz —",
+      "create": "Yaratish",
+      "cancel": "Bekor qilish",
+      "rename": "Qayta nomlash",
+      "move": "Ko'chirish",
+      "delete": "O'chirish",
+      "deleteConfirm": "Shu birlikni o'chirmoqchimisiz?",
+      "notEmpty": "Birlikda bolalar, xodimlar yoki rollar bor — avval bo'shating.",
+      "cycle": "Birlikni o'z quyi daraxti ichiga ko'chirish mumkin emas.",
+      "empty": "Hali birliklar yo'q. Birinchi ildiz birlikni yarating."
+    },
+    "users": {
+      "title": "Foydalanuvchilar",
+      "subtitle": "Foydalanuvchi yarating; parol parol tiklash orqali belgilanadi.",
+      "newUser": "Yangi foydalanuvchi",
+      "email": "Email",
+      "locale": "Interfeys tili",
+      "invite": "Qo'shish",
+      "status": "Holat",
+      "lastLogin": "So'nggi kirish",
+      "roles": "Rollar",
+      "actions": "Amallar",
+      "enable": "Faollashtirish",
+      "disable": "Bloklash",
+      "assignRole": "Rol berish",
+      "role": "Rol",
+      "orgUnit": "Birlik",
+      "grant": "Tayinlash",
+      "revoke": "Bekor qilish",
+      "duplicateEmail": "Bu email allaqachon mavjud.",
+      "cannotSelfDisable": "O'z hisobingizni bloklay olmaysiz.",
+      "cannotRevokeLast": "O'zingizdan oxirgi rolni ololmaysiz.",
+      "needsOrgUnit": "Bu rol birlik tanlashni talab qiladi.",
+      "noOrgUnit": "Bu rol birlik talab qilmaydi."
+    }
+  }
+}

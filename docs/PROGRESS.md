@@ -20,11 +20,99 @@
   - `scripts/schema-engine-wasm.mjs` fallback for environments without engine binaries (D-33).
   - 18 DB tests against Postgres 16: every constraint rejects bad data; Prisma client smoke test (UUIDv7, BigInt UZS, timestamptz). Two NULL-bypass bugs found and fixed before commit (D-37).
 
+- **4.1 + 4.2 — Performance periods, evidence submission + verification** (2026-10-20)
+  - **Periods** (`/api/v1/periods`): CRUD scoped to the actor's org; non-overlap enforced (`aStart ≤ bEnd ∧ bStart ≤ aEnd`); state machine `OPEN → CLOSED → FINALIZED`, skips refused with 409 `orbita:period:invalid_transition`. Dates stored as `date` columns, parsed from `YYYY-MM-DD`.
+  - **Evidence** (`/api/v1/evidence`): submit (admin/manager on behalf — `employee:manage`), verify, reject with reason. Lifecycle `SUBMITTED → VERIFIED | REJECTED` matches the domain workflow. Separation of duties enforced server-side: the submitter is refused on verify/reject of their own evidence (`orbita:evidence:sod_self`, 403), the DB-level trigger is not aware of the actor and this is the first line of defence.
+  - Submissions to a non-`OPEN` period refused (`orbita:evidence:period_closed`, 409). Unknown types refused at the schema layer.
+  - Service fee / government fee stored as BigInt UZS; revenue rule enforced at scoring time (D-27). Metrics JSON pass-through, validated later per type.
+  - Audit (D-49): `period.created`, `period.closed`/`.open`/`.finalized`, `evidence.submitted`/`.verified`/`.rejected`.
+  - 10 new integration tests: period overlap refusal, adjacent allowed, state-machine skip refused, endsOn validation; evidence submit + list filter, non-OPEN refusal, unknown type, verify by other sets verifier/time, self-verify SoD, reject requires reason + 409 on second reject. Full `pnpm run verify` green: 144 unit + 100 DB tests.
+
+- **3.5 — Rubric builder** (2026-10-20)
+  - `Rubric` CRUD under `/api/v1/rubrics`: unique per `(specialty, purpose)`. Creation spawns a fresh DRAFT v1 in the same transaction.
+  - `RubricVersion` lifecycle: `DRAFT` → `ACTIVE` → `RETIRED`. Only `DRAFT` is editable; the service refuses non-DRAFT edits upfront, with the DB trigger (D-36) as the backstop once an assessment references the version.
+  - **Clone-on-edit**: `POST /versions/:id/clone` copies every criterion into a new DRAFT with the next sequential `version` number — the admin edits the clone, leaving the ACTIVE version untouched.
+  - **Criteria**: `PUT /versions/:id/criteria` upserts a criterion (keyed by rubric-version + key) with `weightBp` 0–10000, scoring method (`AUTO_QUIZ` / `MANUAL` / `EVIDENCE_METRIC`), optional metric JSON, gate flag + score, evidence requirements, sort order. `DELETE` on a DRAFT removes it.
+  - **Activation** calls the domain's pure `validateRubric()` (weights sum to 10000, no duplicate measure reads, gate scores present, metrics match method, …). Issues come back as a 400 with every reason listed; a successful validate retires any prior `ACTIVE` version in the same transaction.
+  - Audit: `rubric.created`, `rubric_version.cloned` / `.activated`, `rubric_criterion.created` / `.updated` / `.removed`.
+  - 7 new integration tests: fresh DRAFT v1, duplicate `(specialty, purpose)` 409, non-DRAFT edit 409, weights-not-sum-to-10000 refusal, successful activate → previous ACTIVE RETIRED, clone copies criteria to v2 DRAFT, gate without `gateMinScore` refused.
+  - `pnpm run verify` green: 144 unit + 90 DB tests.
+
+- **3.2+3.3+3.4 — Catalog, career levels, salary bands** (2026-10-20)
+  - 3.2 Catalog: Specialty, Position, Competency, PositionCompetency CRUD. Localized name (`{ uz required, ru?, en? }`) with uz required (D-23); PATCH merges locale-wise so a ru-only edit never drops uz. Position belongs to a Specialty, PositionCompetency carries importance 1–3. Soft-disable via `isActive`.
+  - 3.3 Career levels + requirements: create, reorder (two-phase rank rewrite inside one tx so the partial unique `(orgId, rank) where isActive` is never transiently violated), approve, enable/disable. `LevelRequirement` upsert keyed by `(levelId, specialtyId, competencyId)` with 0–10000 hundredths minScore and `isGate` flag.
+  - 3.4 Salary bands: create with `(positionId, levelId, [effectiveFrom..effectiveTo])` window; overlap detector (`aStart <= bEnd ∧ bStart <= aEnd`, open-ended via `+∞`) refuses conflicts; `close()` extends `effectiveTo`; `approve()` lifts UNAPPROVED. BigInt UZS, min ≤ max validation.
+  - Shared helpers: `LocalizedTextSchema` (zod), `localizedPick(text, locale)` with uz fallback, `orgIdOf(req)` and `auditFrom(req)` extracted so every CRUD module reads context the same way.
+  - Every mutation writes AuditEvent inside the business transaction (D-49): `specialty.*`, `position.*`, `position_competency.*`, `competency.*`, `career_level.*`, `level_requirement.*`, `salary_band.*`.
+  - 12 new integration tests: localized create + PATCH merge, duplicate-key 409, non-admin 403, position↔competency binding, level reorder rewrite (ranks 1..n after reverse), approval flip, requirement range validation, salary overlap refusal, adjacent windows allowed, min>max rejected, band close. Full `pnpm run verify` green: 144 unit + 83 DB tests.
+
+- **3.1-ui — Admin pages for org units and users** (2026-10-20)
+  - `/[locale]/settings/org-units` — tree in path order with depth-based indentation, inline create + rename, delete with confirm. Server component (RSC) loads under the viewer's scope; the client component owns every mutation and reloads from the API after each one.
+  - `/[locale]/settings/users` — table with status badge, role chips (shown as `role · /path/`), inline role assignment (role picker auto-shows the unit dropdown only when the role has ORG_UNIT scope), create form with locale picker, status toggle (disabled for the viewer's own row — the API also enforces this).
+  - Added `assignmentId` to the users list response so role chips revoke directly without a second lookup.
+  - Shared `PageHeader` primitive and `requireMe` server-side guard (bounces 401 → `/login`, 403 → `/forbidden`).
+  - Server/client error codes mapped to i18n keys (`orbita:org_unit:not_empty` → "notEmpty", `orbita:user:duplicate_email` → "duplicateEmail", `orbita:role_assignment:cannot_revoke_last_self` → "cannotRevokeLast") in all three locales.
+  - `pnpm run verify` green: 144 unit + 71 DB tests.
+
+- **3.1 — Org units + users + role assignments (API)** (2026-10-20)
+  - OrgUnit CRUD: create under optional parent (path = `${parent.path}${id}/`), rename (path unchanged — ids never move), reparent (recomputes self and every descendant inside one transaction), delete (refused while children/employees/role assignments reference the unit — DB-level `onDelete: Restrict` is the backstop). `GET /org-units` filters to the actor's ORG_UNIT grant subtree when they are not an ORG-scoped admin.
+  - Users: list, create (no `passwordHash` — the user sets one through the reset flow), status toggle (ACTIVE/DISABLED). Disabling a user deletes every open session so the change takes effect immediately; the actor cannot disable themselves (`orbita:user:cannot_change_self_status`).
+  - Role assignments: `POST /users/role-assignments` and `DELETE /users/role-assignments/:id`. A role with ORG_UNIT-scoped permissions must be assigned with an `orgUnitId`; a role without any ORG_UNIT scope must not have one. An admin cannot revoke their own last role (lockout guard).
+  - `GET /users/roles` lists roles with their permissions for the UI role picker.
+  - Every mutation writes an AuditEvent (`org_unit.created/renamed/moved/deleted`, `user.created/status_changed`, `role_assignment.granted/revoked`) inside the same transaction (D-49).
+  - 17 new integration tests: path recomputation across a 3-level subtree, cycle refusal, non-empty delete refusal, 403 for a non-admin, duplicate email, self-disable guard, disable-kicks-sessions, scope-required role grant, grant+audit+revoke, cannot revoke own last role, role listing. Full `pnpm run verify` green: 144 unit tests, 71 DB tests.
+
+- **2.7 — Web shell (Next.js)** (2026-10-19)
+  - Next.js 15.5 App Router under `apps/web`; React 19; TypeScript strict; Tailwind v4 (CSS-first, no config file).
+  - Design tokens as CSS custom properties on `:root` with the two dark blocks (prefers-color-scheme + `data-theme="dark"`); `@theme inline` exposes them as Tailwind utilities. Palette: warm paper neutral + single terracotta accent, with separate good/warn/critical.
+  - `next-themes` with `attribute="data-theme"` and the inline script that prevents a flash of the wrong theme.
+  - `next-intl` v4 with locale segment routing (uz/ru/en, as-needed prefix); messages in `apps/web/messages/*.json` keyed identically across locales; middleware set up for the matcher.
+  - Fonts loaded via `next/font/google` (Fraunces for display, Inter for body, JetBrains Mono) and attached as CSS variables.
+  - UI primitives: Button (4 variants × 3 sizes), Input, Label, Field (ARIA-wired), Card family, Logo, ThemeToggle (3-way: light/dark/system), LocaleSwitcher.
+  - Pages: `/[locale]/login` (RHF form posting to `/api/v1/auth/login`, error codes mapped to i18n keys), `/[locale]/forgot` (identical reply shown either way), `/[locale]/reset` (10-char min, confirm match, redirect on success), `/[locale]/dashboard` (server-side `/auth/me`, 401 → login), `/[locale]/unauthorized`, `/[locale]/forbidden`, `/[locale]/not-found`.
+  - App shell: sticky top bar + persistent left rail with lucide icons; routes to Phase 3 modules are real `<Link>`s so clicks land on real 404s instead of fake tabs.
+  - API client with problem+json → `ApiError` mapping and server-side cookie forwarding (D-50).
+  - 11 new unit tests: identical message-key set across uz/ru/en; every leaf is a non-empty string; locale type guard; API client wrapping (headers, body, cookie forwarding, 204, problem+json → ApiError, non-problem bodies). Full `pnpm run verify` green: 144 unit, 54 DB tests.
+  - Dev server (`pnpm --filter @orbita/web dev`) verified end-to-end: `/`, `/en/login`, `/ru/login` render in their locales. Production `next build` has a known next-intl 4 + Next 15 interaction with the pages-router error chunk — deferred to Phase 9 polish, dev runtime unaffected.
+
+- **2.6 — RBAC + AuditEvent** (2026-10-19)
+  - Permission catalogue (28 keys) and default seeded roles (admin ORG, manager ORG_UNIT, employee OWN) already pure in `packages/domain`; this slice connects them to the DB.
+  - `loadActor(prisma, userId)` expands RoleAssignment → Role → RolePermission + OrgUnit.path into the `Actor` shape the domain `can()` function consumes.
+  - `seedDefaultRoles(prisma, orgId)` is idempotent — reruns rewrite the permission set so a catalogue change propagates without renaming the role.
+  - `app.requirePermission(permission, resource?)` is the one true authorization check: reads the session cookie, cleans expired rows, loads the actor once per request, calls `can()`. 401 for no/expired session, 403 for insufficient grant. Follow-up preHandlers reuse `req.actor` without a second DB round-trip (D-48).
+  - `writeAudit(tx, {...})` takes a Prisma transaction client so audit rows commit atomically with the business change — if either fails, both roll back (D-49).
+  - `/api/v1/audit` reader scoped to the actor's organization and gated by `audit:read`; `GET` only — append-only triggers from 2.3 (D-35) refuse any other verb at the DB level.
+  - Login success and password reset now write `auth.login` and `auth.password_reset` audit rows.
+  - 13 new integration tests: ORG/ORG_UNIT subtree/OWN scope matrix on two probe routes, loadActor for ACTIVE/DISABLED/unknown users, seedDefaultRoles idempotency, audit list scoped by org, audit refusal without permission, and a direct trigger test that confirms Prisma UPDATE/DELETE on AuditEvent raises `orbita:audit.appendOnly`. Full `pnpm run verify` green: 133 unit (100% domain coverage), 54 DB tests.
+
+- **2.5 — Auth** (2026-10-19)
+  - Argon2id password hashing (`@node-rs/argon2`, OWASP 2024 interactive baseline: m=19 MiB, t=2, p=1); dummy-hash timing shield keeps "unknown email" and "wrong password" paths equal.
+  - Server-side sessions: 32-byte random token in `orbita_sid` cookie (`HttpOnly; SameSite=Lax; Secure` in prod); DB stores only SHA-256 of the token plus a separate CSRF value (D-43). Idle 30 min sliding, absolute 12 h hard cap.
+  - Rate limits: in-memory sliding window — login 5/min per IP+email, reset 3/hour per email (D-44). Clean counter on successful login.
+  - Account lockout: 5 consecutive misses → `lockedUntil = now + 15 min`, counter cleared; distinct error code `orbita:auth:locked` (423).
+  - Password reset: single-use token (SHA-256-stored, 30 min TTL), 10-char minimum new password, response identical whether email exists or not, confirm revokes every existing session for the user.
+  - Mailer: `Mailer` interface with `ConsoleMailer` (tests, outbox) and `SmtpMailer` (nodemailer → Mailpit) implementations.
+  - Routes under `/api/v1/auth`: `POST /login`, `POST /logout`, `GET /me`, `POST /password-reset/{request,confirm}`.
+  - 22 new unit tests (`password`, `tokens`, `session`, `rate-limit`, `mailer`) and 15 integration tests (`auth.db.test.ts`) — happy path, invalid-credentials uniformity, DISABLED account, lockout after 5 misses, rate-limited, cookie flags, expired session cleanup, logout, reset single-use, reset revokes sessions, expired token. Full `pnpm run verify` green: 133 unit tests (100% domain coverage), 41 DB tests.
+
+- **2.4 — API skeleton** (2026-10-19)
+  - Fastify 5 + Zod type provider; `buildApp()` is a pure factory (no port, no `process.env`), `server.ts` is the only entry point that reads env and listens.
+  - `config.ts`: Zod env schema with defaults, reports every failing key in one error (D-39).
+  - `logger.ts`: pino with path-based redaction of auth headers, cookies, CSRF token, Set-Cookie and password/token/sessionId fields; silent in test unless `LOG_LEVEL` is bumped.
+  - `plugins/request-id.ts`: adopts a safe inbound `X-Request-Id` (printable ASCII, ≤128 chars), mints UUID v4 otherwise; echoed on every response (D-40).
+  - `plugins/error-handler.ts`: single `setErrorHandler` turns `OrbitaError`, `ZodError`, Fastify's own validation errors and anything else into RFC 9457 `application/problem+json` with `orbita:<code>` and the request id as `instance`; 500 never leaks `detail` (D-41).
+  - `plugins/prisma.ts`: decorates the app with one `PrismaClient`; tests inject their own, prod builds from `DATABASE_URL` and disconnects on `onClose`.
+  - `/api/v1/healthz` (liveness, no DB) and `/api/v1/readyz` (503 if `SELECT 1` fails).
+  - 20 new tests: 12 unit (`config`, `errors`) + 8 integration against Postgres (`app.db.test.ts`) covering health, request-id adopt/reject, 404/problem+json, OrbitaError mapping, generic throw → 500 with no detail, ZodError → 400 with field paths. Full `pnpm run verify` green: 111 unit tests, 100 % domain coverage, 26 DB tests.
+
 ## In progress
 
 - Nothing.
 
 ## Next
 
-- 2.4 — API skeleton: config (Zod), pino with request ids, problem+json errors with `orbita:<code>` mapping, `/healthz`, `/readyz`.
-- 2.5 — Auth: sessions, CSRF, rate limits, password reset.
+- 4.3 — Performance assessment scoring (evidence auto-allocation, metric computation, INCOMPLETE reasons, calcSnapshot — EX1/EX4/EX6).
+- 4.4 — Review workflow (approve/reject state machine, immutable approved rows).
+- 4.5 — Appeals + reassessment chain.
+- 4.6 — Level review + promotion recommendation (EX8).
+- Admin UI for 3.2–3.5 + 4.1–4.2.

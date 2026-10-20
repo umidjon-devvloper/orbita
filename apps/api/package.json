@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "dev": "node --watch --import tsx src/server.ts",
+    "start": "node --import tsx src/server.ts",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate deploy",
@@ -17,13 +19,23 @@
     "@orbita/domain": "workspace:*",
     "@prisma/driver-adapter-utils": "~7.10.1",
     "@prisma/schema-engine-wasm": "8.1.0-1.d1b3f377ca835d73fd50954a5e22128b9ebdd6b8",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
-    "prisma": "~7.10.1"
+    "prisma": "~7.10.1",
+    "tsx": "^4.23.15"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.3",
+    "@node-rs/argon2": "^2.2.2",
     "@prisma/adapter-pg": "~7.10.1",
     "@prisma/client": "~7.10.1",
     "dotenv": "^18.0.8",
-    "pg": "^8.23.1"
+    "fastify": "^5.12.7",
+    "fastify-plugin": "^6.0.1",
+    "fastify-type-provider-zod": "^7.0.0",
+    "nodemailer": "^10.1.7",
+    "pg": "^8.23.1",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7"
   }
 }
