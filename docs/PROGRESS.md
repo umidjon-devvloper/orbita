@@ -20,6 +20,14 @@
   - `scripts/schema-engine-wasm.mjs` fallback for environments without engine binaries (D-33).
   - 18 DB tests against Postgres 16: every constraint rejects bad data; Prisma client smoke test (UUIDv7, BigInt UZS, timestamptz). Two NULL-bypass bugs found and fixed before commit (D-37).
 
+- **3.1 — Org units + users + role assignments (API)** (2026-10-20)
+  - OrgUnit CRUD: create under optional parent (path = `${parent.path}${id}/`), rename (path unchanged — ids never move), reparent (recomputes self and every descendant inside one transaction), delete (refused while children/employees/role assignments reference the unit — DB-level `onDelete: Restrict` is the backstop). `GET /org-units` filters to the actor's ORG_UNIT grant subtree when they are not an ORG-scoped admin.
+  - Users: list, create (no `passwordHash` — the user sets one through the reset flow), status toggle (ACTIVE/DISABLED). Disabling a user deletes every open session so the change takes effect immediately; the actor cannot disable themselves (`orbita:user:cannot_change_self_status`).
+  - Role assignments: `POST /users/role-assignments` and `DELETE /users/role-assignments/:id`. A role with ORG_UNIT-scoped permissions must be assigned with an `orgUnitId`; a role without any ORG_UNIT scope must not have one. An admin cannot revoke their own last role (lockout guard).
+  - `GET /users/roles` lists roles with their permissions for the UI role picker.
+  - Every mutation writes an AuditEvent (`org_unit.created/renamed/moved/deleted`, `user.created/status_changed`, `role_assignment.granted/revoked`) inside the same transaction (D-49).
+  - 17 new integration tests: path recomputation across a 3-level subtree, cycle refusal, non-empty delete refusal, 403 for a non-admin, duplicate email, self-disable guard, disable-kicks-sessions, scope-required role grant, grant+audit+revoke, cannot revoke own last role, role listing. Full `pnpm run verify` green: 144 unit tests, 71 DB tests.
+
 - **2.7 — Web shell (Next.js)** (2026-10-19)
   - Next.js 15.5 App Router under `apps/web`; React 19; TypeScript strict; Tailwind v4 (CSS-first, no config file).
   - Design tokens as CSS custom properties on `:root` with the two dark blocks (prefers-color-scheme + `data-theme="dark"`); `@theme inline` exposes them as Tailwind utilities. Palette: warm paper neutral + single terracotta accent, with separate good/warn/critical.
@@ -69,4 +77,5 @@
 
 ## Next
 
-- Phase 3 — configuration CRUD (org units, specialties/positions/competencies, career levels, salary bands, rubric builder).
+- 3.1-ui — Admin pages in `apps/web` for the API delivered above (org tree, user list, role assignments).
+- 3.2 — Specialties, positions, competencies with localized names (uz/ru/en, uz fallback).

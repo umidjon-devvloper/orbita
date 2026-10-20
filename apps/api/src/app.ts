@@ -8,6 +8,8 @@ import { createRateLimit, type RateLimit } from "./lib/rate-limit.js";
 import { auditRoutes } from "./modules/audit/routes.js";
 import { authRoutes } from "./modules/auth/routes.js";
 import type { AuthContext } from "./modules/auth/service.js";
+import { orgUnitRoutes } from "./modules/org/routes.js";
+import { userRoutes } from "./modules/users/routes.js";
 import { authzPlugin } from "./plugins/authz.js";
 import { cookiePlugin } from "./plugins/cookie.js";
 import { errorHandlerPlugin } from "./plugins/error-handler.js";
@@ -81,6 +83,8 @@ export async function buildApp(opts: BuildAppOptions) {
       await v1.register(healthRoutes);
       await v1.register(authRoutes({ ctx: authCtx, secureCookie }), { prefix: "/auth" });
       await v1.register(auditRoutes, { prefix: "/audit" });
+      await v1.register(orgUnitRoutes, { prefix: "/org-units" });
+      await v1.register(userRoutes, { prefix: "/users" });
     },
     { prefix: "/api/v1" },
   );
