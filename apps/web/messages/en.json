@@ -79,5 +79,48 @@
   },
   "footer": {
     "madeIn": "Tashkent"
+  },
+  "settings": {
+    "orgUnits": {
+      "title": "Organizational units",
+      "subtitle": "Tree. New nodes are created only inside a parent.",
+      "newUnit": "New unit",
+      "name": "Name",
+      "parent": "Parent",
+      "rootOption": "— Root —",
+      "create": "Create",
+      "cancel": "Cancel",
+      "rename": "Rename",
+      "move": "Move",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this unit?",
+      "notEmpty": "The unit still has children, employees or roles — clear them first.",
+      "cycle": "A unit cannot be moved into its own subtree.",
+      "empty": "No units yet. Create the first root unit."
+    },
+    "users": {
+      "title": "Users",
+      "subtitle": "Create a user; their password is set via password reset.",
+      "newUser": "New user",
+      "email": "Email",
+      "locale": "Interface language",
+      "invite": "Add",
+      "status": "Status",
+      "lastLogin": "Last login",
+      "roles": "Roles",
+      "actions": "Actions",
+      "enable": "Enable",
+      "disable": "Disable",
+      "assignRole": "Assign role",
+      "role": "Role",
+      "orgUnit": "Unit",
+      "grant": "Grant",
+      "revoke": "Revoke",
+      "duplicateEmail": "A user with this email already exists.",
+      "cannotSelfDisable": "You cannot disable your own account.",
+      "cannotRevokeLast": "You cannot revoke your own last role.",
+      "needsOrgUnit": "This role requires a unit.",
+      "noOrgUnit": "This role does not take a unit."
+    }
   }
 }

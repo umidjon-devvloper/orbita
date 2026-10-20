@@ -22,7 +22,12 @@ export interface UserListItem {
   readonly locale: string;
   readonly createdAt: string;
   readonly lastLoginAt: string | null;
-  readonly roles: readonly { roleKey: string; orgUnitId: string | null; orgUnitPath: string | null }[];
+  readonly roles: readonly {
+    assignmentId: string;
+    roleKey: string;
+    orgUnitId: string | null;
+    orgUnitPath: string | null;
+  }[];
 }
 
 export interface AuditContext {
@@ -52,6 +57,7 @@ export async function listUsers(prisma: PrismaClient, orgId: string): Promise<Us
     createdAt: r.createdAt.toISOString(),
     lastLoginAt: r.lastLoginAt?.toISOString() ?? null,
     roles: r.assignments.map((a) => ({
+      assignmentId: a.id,
       roleKey: a.role.key,
       orgUnitId: a.orgUnit?.id ?? null,
       orgUnitPath: a.orgUnit?.path ?? null,

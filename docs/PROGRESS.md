@@ -20,6 +20,14 @@
   - `scripts/schema-engine-wasm.mjs` fallback for environments without engine binaries (D-33).
   - 18 DB tests against Postgres 16: every constraint rejects bad data; Prisma client smoke test (UUIDv7, BigInt UZS, timestamptz). Two NULL-bypass bugs found and fixed before commit (D-37).
 
+- **3.1-ui — Admin pages for org units and users** (2026-10-20)
+  - `/[locale]/settings/org-units` — tree in path order with depth-based indentation, inline create + rename, delete with confirm. Server component (RSC) loads under the viewer's scope; the client component owns every mutation and reloads from the API after each one.
+  - `/[locale]/settings/users` — table with status badge, role chips (shown as `role · /path/`), inline role assignment (role picker auto-shows the unit dropdown only when the role has ORG_UNIT scope), create form with locale picker, status toggle (disabled for the viewer's own row — the API also enforces this).
+  - Added `assignmentId` to the users list response so role chips revoke directly without a second lookup.
+  - Shared `PageHeader` primitive and `requireMe` server-side guard (bounces 401 → `/login`, 403 → `/forbidden`).
+  - Server/client error codes mapped to i18n keys (`orbita:org_unit:not_empty` → "notEmpty", `orbita:user:duplicate_email` → "duplicateEmail", `orbita:role_assignment:cannot_revoke_last_self` → "cannotRevokeLast") in all three locales.
+  - `pnpm run verify` green: 144 unit + 71 DB tests.
+
 - **3.1 — Org units + users + role assignments (API)** (2026-10-20)
   - OrgUnit CRUD: create under optional parent (path = `${parent.path}${id}/`), rename (path unchanged — ids never move), reparent (recomputes self and every descendant inside one transaction), delete (refused while children/employees/role assignments reference the unit — DB-level `onDelete: Restrict` is the backstop). `GET /org-units` filters to the actor's ORG_UNIT grant subtree when they are not an ORG-scoped admin.
   - Users: list, create (no `passwordHash` — the user sets one through the reset flow), status toggle (ACTIVE/DISABLED). Disabling a user deletes every open session so the change takes effect immediately; the actor cannot disable themselves (`orbita:user:cannot_change_self_status`).
@@ -77,5 +85,5 @@
 
 ## Next
 
-- 3.1-ui — Admin pages in `apps/web` for the API delivered above (org tree, user list, role assignments).
 - 3.2 — Specialties, positions, competencies with localized names (uz/ru/en, uz fallback).
+- 3.3 — Career levels + level requirements + reorder/disable.

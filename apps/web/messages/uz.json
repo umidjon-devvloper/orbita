@@ -79,5 +79,48 @@
   },
   "footer": {
     "madeIn": "Toshkent"
+  },
+  "settings": {
+    "orgUnits": {
+      "title": "Tashkiliy birliklar",
+      "subtitle": "Daraxt. Yangi tugunlar faqat ota tugun ichida yaratiladi.",
+      "newUnit": "Yangi birlik",
+      "name": "Nomi",
+      "parent": "Ota tugun",
+      "rootOption": "— Ildiz —",
+      "create": "Yaratish",
+      "cancel": "Bekor qilish",
+      "rename": "Qayta nomlash",
+      "move": "Ko'chirish",
+      "delete": "O'chirish",
+      "deleteConfirm": "Shu birlikni o'chirmoqchimisiz?",
+      "notEmpty": "Birlikda bolalar, xodimlar yoki rollar bor — avval bo'shating.",
+      "cycle": "Birlikni o'z quyi daraxti ichiga ko'chirish mumkin emas.",
+      "empty": "Hali birliklar yo'q. Birinchi ildiz birlikni yarating."
+    },
+    "users": {
+      "title": "Foydalanuvchilar",
+      "subtitle": "Foydalanuvchi yarating; parol parol tiklash orqali belgilanadi.",
+      "newUser": "Yangi foydalanuvchi",
+      "email": "Email",
+      "locale": "Interfeys tili",
+      "invite": "Qo'shish",
+      "status": "Holat",
+      "lastLogin": "So'nggi kirish",
+      "roles": "Rollar",
+      "actions": "Amallar",
+      "enable": "Faollashtirish",
+      "disable": "Bloklash",
+      "assignRole": "Rol berish",
+      "role": "Rol",
+      "orgUnit": "Birlik",
+      "grant": "Tayinlash",
+      "revoke": "Bekor qilish",
+      "duplicateEmail": "Bu email allaqachon mavjud.",
+      "cannotSelfDisable": "O'z hisobingizni bloklay olmaysiz.",
+      "cannotRevokeLast": "O'zingizdan oxirgi rolni ololmaysiz.",
+      "needsOrgUnit": "Bu rol birlik tanlashni talab qiladi.",
+      "noOrgUnit": "Bu rol birlik talab qilmaydi."
+    }
   }
 }
