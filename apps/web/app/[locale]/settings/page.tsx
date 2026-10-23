@@ -35,7 +35,7 @@ const ENTRIES: readonly Entry[] = [
   { href: "/settings/catalog", key: "catalog", ready: true },
   { href: "/settings/levels", key: "levels", ready: true },
   { href: "/settings/salary", key: "salary", ready: true },
-  { href: "/settings/rubrics", key: "rubrics", ready: false },
+  { href: "/settings/rubrics", key: "rubrics", ready: true },
 ];
 
 function Shell({ locale }: { readonly locale: string }) {
