@@ -115,6 +115,54 @@
       "rubrics": "Assessment rubrics",
       "rubricsNote": "Versions, criteria, weights, clone-on-edit."
     },
+    "common": {
+      "add": "Add",
+      "create": "Create",
+      "cancel": "Cancel",
+      "save": "Save",
+      "key": "Key",
+      "nameUz": "Name (uz)",
+      "nameRu": "Name (ru)",
+      "nameEn": "Name (en)",
+      "empty": "No records yet.",
+      "disabled": "disabled",
+      "duplicateKey": "This key already exists.",
+      "invalidKey": "Key: a-z, 0-9, _, -; up to 63 chars."
+    },
+    "catalog": {
+      "title": "Catalog",
+      "subtitle": "Specialty, position, competency — every name is localized (uz required).",
+      "specialties": "Specialties",
+      "positions": "Positions",
+      "competencies": "Competencies",
+      "specialty": "Specialty",
+      "title_pos": "Position title (uz)",
+      "importance": "Importance (1–3)"
+    },
+    "levels": {
+      "title": "Career levels",
+      "subtitle": "Levels in rank order. New levels append to the end with the UNAPPROVED badge.",
+      "rank": "Rank",
+      "status": "Status",
+      "approve": "Approve",
+      "moveUp": "Up",
+      "moveDown": "Down",
+      "unapproved": "Unapproved"
+    },
+    "salary": {
+      "title": "Salary bands",
+      "subtitle": "Position × level × date window. Overlaps are refused.",
+      "position": "Position",
+      "level": "Level",
+      "minAmount": "Min (UZS)",
+      "maxAmount": "Max (UZS)",
+      "effectiveFrom": "From",
+      "effectiveTo": "To (empty = open-ended)",
+      "overlap": "Another band already covers this window.",
+      "approve": "Approve",
+      "close": "Close",
+      "unapproved": "Unapproved"
+    },
     "orgUnits": {
       "title": "Organizational units",
       "subtitle": "Tree. New nodes are created only inside a parent.",

@@ -115,6 +115,54 @@
       "rubrics": "Baholash rubrikalari",
       "rubricsNote": "Versiyalar, kriteriya, og'irliklar, clone-on-edit."
     },
+    "common": {
+      "add": "Qo'shish",
+      "create": "Yaratish",
+      "cancel": "Bekor qilish",
+      "save": "Saqlash",
+      "key": "Kalit",
+      "nameUz": "Nomi (uz)",
+      "nameRu": "Nomi (ru)",
+      "nameEn": "Nomi (en)",
+      "empty": "Hali yozuvlar yo'q.",
+      "disabled": "o'chirilgan",
+      "duplicateKey": "Bu kalit allaqachon mavjud.",
+      "invalidKey": "Kalit: a-z, 0-9, _, -; 63 belgigacha."
+    },
+    "catalog": {
+      "title": "Katalog",
+      "subtitle": "Mutaxassislik, lavozim, kompetensiya — barcha nomlar lokalizatsiya qilinadi (uz majburiy).",
+      "specialties": "Mutaxassisliklar",
+      "positions": "Lavozimlar",
+      "competencies": "Kompetensiyalar",
+      "specialty": "Mutaxassislik",
+      "title_pos": "Lavozim nomi (uz)",
+      "importance": "Muhimligi (1–3)"
+    },
+    "levels": {
+      "title": "Kareyra darajalari",
+      "subtitle": "Darajalar daraxt tartibida. Yangi darajalar oxiriga qo'shiladi, UNAPPROVED badge olib qolinadi.",
+      "rank": "Rank",
+      "status": "Holat",
+      "approve": "Tasdiqlash",
+      "moveUp": "Yuqoriga",
+      "moveDown": "Pastga",
+      "unapproved": "Tasdiqlanmagan"
+    },
+    "salary": {
+      "title": "Oylik maosh oralig'lari",
+      "subtitle": "Position × level × sana oynasi. Overlap rad etiladi.",
+      "position": "Lavozim",
+      "level": "Daraja",
+      "minAmount": "Min (UZS)",
+      "maxAmount": "Max (UZS)",
+      "effectiveFrom": "Boshlanish",
+      "effectiveTo": "Tugash (bo'sh = ochiq)",
+      "overlap": "Bu oyna uchun boshqa band mavjud.",
+      "approve": "Tasdiqlash",
+      "close": "Yopish",
+      "unapproved": "Tasdiqlanmagan"
+    },
     "orgUnits": {
       "title": "Tashkiliy birliklar",
       "subtitle": "Daraxt. Yangi tugunlar faqat ota tugun ichida yaratiladi.",

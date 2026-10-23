@@ -2,6 +2,14 @@
 
 ## Done
 
+- **Admin UI — catalog, levels, salary** (2026-10-23)
+  - `/settings/catalog`: three stacked blocks (Specialty / Position / Competency) with inline create. Localized names in uz (required) + ru + en; `orbita:catalog:duplicate_key` → human message.
+  - `/settings/levels`: ordered list by `rank`; row-level ↑/↓ buttons post the whole active-ranked list to `/levels/reorder` so the partial unique index never breaks mid-move. UNAPPROVED chip + Approve button. Inactive levels shown separately.
+  - `/settings/salary`: bands grouped by position, sorted by `effectiveFrom` desc. Create form takes position + level + min/max (UZS whole som, formatted with thin spaces) + from/to; empty `effectiveTo` = open-ended. Approve + Close actions on each row; overlap conflict → human message.
+  - Settings index flipped Catalog / Career levels / Salary cards from `soon` to live; rubric builder stays soon.
+  - Translation keys added under `settings.{common,catalog,levels,salary}` in uz/ru/en with parity.
+  - `pnpm typecheck`, `pnpm lint`, `pnpm format`, `pnpm test` all green (144 unit tests).
+
 - **Phase 1 — Audit & spec** (2026-10-18)
   - Repository audit: empty → greenfield.
   - Docs: PRD, ARCHITECTURE, DATABASE_DESIGN, SCORING_MODEL, SECURITY, IMPLEMENTATION_PLAN, OPEN_QUESTIONS, DECISIONS.

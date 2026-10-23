@@ -32,9 +32,9 @@ interface Entry {
 const ENTRIES: readonly Entry[] = [
   { href: "/settings/org-units", key: "orgUnits", ready: true },
   { href: "/settings/users", key: "users", ready: true },
-  { href: "/settings/catalog", key: "catalog", ready: false },
-  { href: "/settings/levels", key: "levels", ready: false },
-  { href: "/settings/salary", key: "salary", ready: false },
+  { href: "/settings/catalog", key: "catalog", ready: true },
+  { href: "/settings/levels", key: "levels", ready: true },
+  { href: "/settings/salary", key: "salary", ready: true },
   { href: "/settings/rubrics", key: "rubrics", ready: false },
 ];
 
