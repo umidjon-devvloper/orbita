@@ -2,6 +2,13 @@
 
 ## Done
 
+- **Dashboard overview tour + section previews** (2026-10-23)
+  - `/dashboard` rewritten as a guided tour: hero + 4-step pipeline (Set up → Collect evidence → Assess → Reward) + section cards (one per nav area) + first-time setup checklist.
+  - Each section card has an illustrative preview — stylized rows, meters, a tiny ranking bar chart — all tagged "misol / пример / example" per the no-demo-as-real rule in CLAUDE.md.
+  - `ComingSoon` placeholder enhanced: two-column layout with a "what this does / why it matters" card + an illustrative preview specific to the section (employees table, candidate rows, assessment card, rewards ranking).
+  - Translations: parity-safe `overview.*` block added to uz/ru/en (greeting, flow, sections, checklist, preview labels, exampleLabel).
+  - `pnpm typecheck`, `pnpm lint`, `pnpm format`, `pnpm test` all green.
+
 - **Admin UI — rubric builder** (2026-10-23)
   - `/settings/rubrics` three-pane layout: sidebar lists rubrics with specialty + purpose badge; main pane shows version tabs (DRAFT/ACTIVE/RETIRED with LOCKED chip) and the criteria table of the selected version.
   - Weight meter always visible; Activate disabled until the sum equals 10000 and at least one criterion exists; the domain's `validateRubric()` surfaces every failure reason verbatim.

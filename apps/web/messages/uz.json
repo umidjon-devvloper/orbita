@@ -80,6 +80,86 @@
   "footer": {
     "madeIn": "Toshkent"
   },
+  "overview": {
+    "greeting": "Xush kelibsiz",
+    "lead": "Orbita — bu xodimlar faoliyatini baholash, kareyra darajalarini boshqarish, nomzodlarni tanlash va mukofotlash platformasi. Quyida saytning har bir qismini qisqacha ko'rib chiqamiz.",
+    "exampleLabel": "misol — haqiqiy ma'lumot emas",
+    "flow": {
+      "title": "Qanday ishlaydi",
+      "subtitle": "To'rt bosqichli oqim. Har bir bosqich keyingisini oziqlantiradi.",
+      "s1Title": "1 — Sozlang",
+      "s1Detail": "Tashkiliy tuzilma, foydalanuvchilar, katalog, darajalar va rubrikalarni belgilaymiz. Bu bir marta qilinadi va keyin oz-ozdan yangilanadi.",
+      "s2Title": "2 — Dalillarni to'plang",
+      "s2Detail": "Davr davomida xizmat yozuvlari, mijoz feedback, treninglar va boshqa dalillar jamlanadi. Faqat VERIFIED dalillar ballarga ta'sir qiladi.",
+      "s3Title": "3 — Baholang",
+      "s3Detail": "Davr yakunida tizim rubrika asosida ball hisoblaydi. AI faqat taklif qiladi — qaror doim odamning qo'lida.",
+      "s4Title": "4 — Mukofotlang",
+      "s4Detail": "Mutaxassislik + rubrika + davr ichida reyting tuziladi va byudjet asosida mukofot taklif qilinadi. To'lov qo'lda tasdiqlanadi."
+    },
+    "sections": {
+      "title": "Saytning qismlari",
+      "subtitle": "Har bir qism nima qiladi va qanday ko'rinadi.",
+      "ready": "Tayyor",
+      "soon": "Tez orada",
+      "open": "Ochish",
+      "settings": {
+        "title": "Sozlamalar",
+        "what": "Butun tizimning asosi. Avval shu yerda ishlashni boshlang.",
+        "why": "Rubrikasiz baholash, darajasiz oylik, katalogsiz hech narsa yo'q."
+      },
+      "employees": {
+        "title": "Xodimlar",
+        "what": "Jamoangiz: har bir xodim bo'lim, lavozim, mutaxassislik va kareyra darajasiga biriktiriladi.",
+        "why": "Baholash va mukofotlash xodim profilidan boshlanadi."
+      },
+      "candidates": {
+        "title": "Nomzodlar",
+        "what": "Ishga nomzodlar: taklif tokeni orqali ularga avtomatik test yuboriladi.",
+        "why": "Yakuniy ball va rad etish/qabul qilish qarori shu yerda qayd etiladi — hech qachon avtomatik tarzda emas."
+      },
+      "assessments": {
+        "title": "Baholashlar",
+        "what": "Davrlar, dalillar, hisob-kitob, review, apellyatsiya va promosyon tavsiyalari.",
+        "why": "Bu sahifa Orbita'ning asosiy ishi."
+      },
+      "rewards": {
+        "title": "Mukofotlar",
+        "what": "Mutaxassislik + davr ichida reyting (minimum 3 kishi), siyosat bo'yicha byudjet taqsimoti.",
+        "why": "To'lov statusini qo'lda PAID deb belgilaysiz — hech narsa avtomatik yuborilmaydi."
+      }
+    },
+    "checklist": {
+      "title": "Birinchi marta sozlash",
+      "subtitle": "Agar saytni endigina ko'rib turgan bo'lsangiz, mana shu tartibda yuring.",
+      "s1": "1. Tashkiliy birliklar — bo'lim/filial daraxtini tuzing.",
+      "s2": "2. Foydalanuvchilar — qolgan administratorlar va manejerlarni qo'shing.",
+      "s3": "3. Katalog — mutaxassislik, lavozim, kompetensiyalarni kiriting.",
+      "s4": "4. Darajalar + oylik oralig'i — kareyra zinapoyasini belgilang.",
+      "s5": "5. Rubrika — birinchi baholash shablonini DRAFT'da yarating, so'ng ACTIVE qiling.",
+      "s6": "6. Birinchi davrni oching va dalillarni to'plashga ruxsat bering."
+    },
+    "preview": {
+      "settings": {
+        "orgUnits": "Tashkiliy birliklar",
+        "users": "Foydalanuvchilar",
+        "catalog": "Katalog",
+        "levels": "Darajalar",
+        "salary": "Oylik oralig'i",
+        "rubrics": "Rubrikalar"
+      },
+      "employees": {
+        "colName": "Ism",
+        "colPosition": "Lavozim",
+        "colLevel": "Daraja",
+        "colUnit": "Birlik"
+      },
+      "assessments": {
+        "period": "Davr",
+        "score": "Ball",
+        "status": "Holat"
+      }
+    }
+  },
   "comingSoon": {
     "employees": {
       "title": "Xodimlar bo'limi tayyorlanmoqda",

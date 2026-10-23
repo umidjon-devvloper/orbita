@@ -80,6 +80,86 @@
   "footer": {
     "madeIn": "Tashkent"
   },
+  "overview": {
+    "greeting": "Welcome",
+    "lead": "Orbita is a platform for assessing employees, managing career levels, screening candidates, and allocating rewards. Below is a short tour of every part of the system.",
+    "exampleLabel": "example — not real data",
+    "flow": {
+      "title": "How it works",
+      "subtitle": "Four stages. Each one feeds the next.",
+      "s1Title": "1 — Set up",
+      "s1Detail": "Define org structure, users, catalog, career levels and rubrics. Done once, then tweaked over time.",
+      "s2Title": "2 — Collect evidence",
+      "s2Detail": "During a period, service records, customer feedback, training and other evidence pile up. Only VERIFIED evidence feeds the score.",
+      "s3Title": "3 — Assess",
+      "s3Detail": "At the period's end the system computes a score from the rubric. AI only suggests — a human always decides.",
+      "s4Title": "4 — Reward",
+      "s4Detail": "Within (specialty + rubric + period) we rank employees and allocate budget per policy. Payment is marked PAID by hand."
+    },
+    "sections": {
+      "title": "The pages",
+      "subtitle": "What each page does and what it looks like.",
+      "ready": "Ready",
+      "soon": "Soon",
+      "open": "Open",
+      "settings": {
+        "title": "Settings",
+        "what": "The foundation of the whole system. Start here.",
+        "why": "No rubric means no assessment; no level means no salary; no catalog means nothing works."
+      },
+      "employees": {
+        "title": "Employees",
+        "what": "Your workforce: each person is tied to a unit, position, specialty and career level.",
+        "why": "Assessment and rewards start from the employee profile."
+      },
+      "candidates": {
+        "title": "Candidates",
+        "what": "Hiring candidates: an invite token sends them an auto-scored assessment.",
+        "why": "The final score and hire/reject decision are recorded here — never automated."
+      },
+      "assessments": {
+        "title": "Assessments",
+        "what": "Periods, evidence, scoring, reviews, appeals and promotion recommendations.",
+        "why": "This is Orbita's core workflow."
+      },
+      "rewards": {
+        "title": "Rewards",
+        "what": "Cohort ranking (specialty + period, minimum 3 people) and budget allocation per policy.",
+        "why": "You mark payment PAID by hand — nothing is sent automatically."
+      }
+    },
+    "checklist": {
+      "title": "First-time setup",
+      "subtitle": "If this is your first look, go in this order.",
+      "s1": "1. Org units — describe the department / branch tree.",
+      "s2": "2. Users — invite the rest of the admins and managers.",
+      "s3": "3. Catalog — specialties, positions, competencies.",
+      "s4": "4. Levels + salary bands — the career ladder.",
+      "s5": "5. Rubric — create a DRAFT, then activate it.",
+      "s6": "6. Open the first period and let evidence come in."
+    },
+    "preview": {
+      "settings": {
+        "orgUnits": "Org units",
+        "users": "Users",
+        "catalog": "Catalog",
+        "levels": "Levels",
+        "salary": "Salary bands",
+        "rubrics": "Rubrics"
+      },
+      "employees": {
+        "colName": "Name",
+        "colPosition": "Position",
+        "colLevel": "Level",
+        "colUnit": "Unit"
+      },
+      "assessments": {
+        "period": "Period",
+        "score": "Score",
+        "status": "Status"
+      }
+    }
+  },
   "comingSoon": {
     "employees": {
       "title": "Employees — UI in progress",

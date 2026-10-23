@@ -485,7 +485,7 @@ function VersionPane({
 
       <div className="flex items-center gap-3 text-xs">
         <span className="text-fg-muted">{t("weightTotal")}:</span>
-        <span className={`font-mono tabular-nums font-semibold ${weightOk ? "text-ok" : "text-warn"}`}>
+        <span className={`font-mono tabular-nums font-semibold ${weightOk ? "text-good" : "text-warn"}`}>
           {weight.toString()} / 10000
         </span>
         {!weightOk && <span className="text-fg-dim">— {t("weightTarget")}</span>}
