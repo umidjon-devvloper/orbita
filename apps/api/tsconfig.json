@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "rootDir": ".", "noEmit": true, "types": ["node"] },
-  "include": ["src", "prisma.config.ts"],
+  "include": ["src", "prisma.config.ts", "scripts/seed-admin.ts"],
   "exclude": ["src/generated"]
 }

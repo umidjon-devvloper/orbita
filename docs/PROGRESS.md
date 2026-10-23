@@ -2,6 +2,23 @@
 
 ## Done
 
+- **Admin UI — rubric builder** (2026-10-23)
+  - `/settings/rubrics` three-pane layout: sidebar lists rubrics with specialty + purpose badge; main pane shows version tabs (DRAFT/ACTIVE/RETIRED with LOCKED chip) and the criteria table of the selected version.
+  - Weight meter always visible; Activate disabled until the sum equals 10000 and at least one criterion exists; the domain's `validateRubric()` surfaces every failure reason verbatim.
+  - Clone-to-DRAFT button on ACTIVE/RETIRED versions; inline criterion editor supports key, uz name, competency, weightBp, method (AUTO_QUIZ / MANUAL / EVIDENCE_METRIC), gate + minScore, evidence required + min count, sort order, and raw JSON metric config (parsed and surfaced client-side before send).
+  - Error mapping for `orbita:rubric:duplicate_purpose`, `rubric_version:not_draft`, `rubric_version:locked`, and `rubric_version:invalid` (shows the full issue list from the domain).
+  - Settings index flipped `rubrics` from `soon` to live — all six settings pages are now live.
+  - Translations: parity-safe `settings.rubrics.*` added for uz/ru/en.
+  - `pnpm typecheck`, `pnpm lint`, `pnpm format`, `pnpm test` all green (144 unit tests).
+
+- **Admin UI — catalog, levels, salary** (2026-10-23)
+  - `/settings/catalog`: three stacked blocks (Specialty / Position / Competency) with inline create. Localized names in uz (required) + ru + en; `orbita:catalog:duplicate_key` → human message.
+  - `/settings/levels`: ordered list by `rank`; row-level ↑/↓ buttons post the whole active-ranked list to `/levels/reorder` so the partial unique index never breaks mid-move. UNAPPROVED chip + Approve button. Inactive levels shown separately.
+  - `/settings/salary`: bands grouped by position, sorted by `effectiveFrom` desc. Create form takes position + level + min/max (UZS whole som, formatted with thin spaces) + from/to; empty `effectiveTo` = open-ended. Approve + Close actions on each row; overlap conflict → human message.
+  - Settings index flipped Catalog / Career levels / Salary cards from `soon` to live; rubric builder stays soon.
+  - Translation keys added under `settings.{common,catalog,levels,salary}` in uz/ru/en with parity.
+  - `pnpm typecheck`, `pnpm lint`, `pnpm format`, `pnpm test` all green (144 unit tests).
+
 - **Phase 1 — Audit & spec** (2026-10-18)
   - Repository audit: empty → greenfield.
   - Docs: PRD, ARCHITECTURE, DATABASE_DESIGN, SCORING_MODEL, SECURITY, IMPLEMENTATION_PLAN, OPEN_QUESTIONS, DECISIONS.

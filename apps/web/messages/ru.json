@@ -80,7 +80,132 @@
   "footer": {
     "madeIn": "Ташкент"
   },
+  "comingSoon": {
+    "employees": {
+      "title": "Раздел «Сотрудники» в разработке",
+      "detail": "API готов (org units + роли + evidence); таблица и профиль появятся в следующем слайсе."
+    },
+    "candidates": {
+      "title": "Раздел «Кандидаты» в разработке",
+      "detail": "Candidate CRUD + invite-токены + публичный интерфейс оценки — в фазе 5."
+    },
+    "assessments": {
+      "title": "Раздел «Оценки» в разработке",
+      "detail": "Периоды, evidence, расчёт (EX1/EX4/EX6) и ревью — в слайсах 4.3+."
+    },
+    "rewards": {
+      "title": "Раздел «Вознаграждения» в разработке",
+      "detail": "Политики, бюджет, ранжирование и утверждение — в фазе 7."
+    }
+  },
   "settings": {
+    "index": {
+      "title": "Настройки",
+      "subtitle": "Организационные настройки — только для пользователей с админ-правами.",
+      "orgUnits": "Организационные единицы",
+      "orgUnitsNote": "Дерево — структура подразделений/филиалов.",
+      "users": "Пользователи",
+      "usersNote": "Создание аккаунтов, назначение ролей, блокировка.",
+      "catalog": "Каталог",
+      "catalogNote": "Specialty, position, competency (локализованные названия).",
+      "levels": "Карьерные уровни",
+      "levelsNote": "Список уровней, requirements, бейдж UNAPPROVED.",
+      "salary": "Диапазоны зарплат",
+      "salaryNote": "Position × level × окно дат; пересечения отклоняются.",
+      "rubrics": "Рубрики оценки",
+      "rubricsNote": "Версии, критерии, веса, clone-on-edit."
+    },
+    "common": {
+      "add": "Добавить",
+      "create": "Создать",
+      "cancel": "Отмена",
+      "save": "Сохранить",
+      "key": "Ключ",
+      "nameUz": "Название (uz)",
+      "nameRu": "Название (ru)",
+      "nameEn": "Название (en)",
+      "empty": "Записей пока нет.",
+      "disabled": "отключено",
+      "duplicateKey": "Такой ключ уже существует.",
+      "invalidKey": "Ключ: a-z, 0-9, _, -; до 63 символов."
+    },
+    "catalog": {
+      "title": "Каталог",
+      "subtitle": "Специальность, должность, компетенция — все названия локализуются (uz обязателен).",
+      "specialties": "Специальности",
+      "positions": "Должности",
+      "competencies": "Компетенции",
+      "specialty": "Специальность",
+      "title_pos": "Название должности (uz)",
+      "importance": "Важность (1–3)"
+    },
+    "levels": {
+      "title": "Карьерные уровни",
+      "subtitle": "Уровни по rank-порядку. Новые добавляются в конец, с бейджем UNAPPROVED.",
+      "rank": "Rank",
+      "status": "Статус",
+      "approve": "Утвердить",
+      "moveUp": "Вверх",
+      "moveDown": "Вниз",
+      "unapproved": "Не утверждён"
+    },
+    "salary": {
+      "title": "Диапазоны зарплат",
+      "subtitle": "Position × level × окно дат. Пересечения отклоняются.",
+      "position": "Должность",
+      "level": "Уровень",
+      "minAmount": "Мин (UZS)",
+      "maxAmount": "Макс (UZS)",
+      "effectiveFrom": "С",
+      "effectiveTo": "По (пусто = открыто)",
+      "overlap": "Для этого окна уже есть диапазон.",
+      "approve": "Утвердить",
+      "close": "Закрыть",
+      "unapproved": "Не утверждён"
+    },
+    "rubrics": {
+      "title": "Рубрики оценки",
+      "subtitle": "Специальность × цель. Версии: DRAFT → ACTIVE → RETIRED. Редактируется только DRAFT.",
+      "newRubric": "Новая рубрика",
+      "specialty": "Специальность",
+      "purpose": "Цель",
+      "purposeCandidate": "Кандидат",
+      "purposePerformance": "Результативность",
+      "purposeLevelReview": "Пересмотр уровня",
+      "version": "Версия",
+      "status": "Статус",
+      "draft": "Черновик",
+      "active": "Активная",
+      "retired": "Снята",
+      "locked": "Заблокирована",
+      "weightTotal": "Сумма весов",
+      "weightTarget": "Должно быть ровно 10000",
+      "activate": "Активировать",
+      "clone": "Клонировать",
+      "addCriterion": "Добавить критерий",
+      "criterion": "Критерий",
+      "weightBp": "Вес (bp, 0–10000)",
+      "method": "Метод",
+      "methodAutoQuiz": "Авто-тест",
+      "methodManual": "Вручную",
+      "methodEvidenceMetric": "По метрике",
+      "isGate": "Gate",
+      "gateMinScore": "Мин. балл",
+      "evidenceRequired": "Нужны доказательства",
+      "minEvidenceCount": "Мин. кол-во доказ.",
+      "sortOrder": "Порядок",
+      "metricConfig": "Конфиг метрики (JSON)",
+      "description": "Описание (uz)",
+      "noRubrics": "Рубрик нет. Создайте первую.",
+      "noVersions": "Нет версий.",
+      "noCriteria": "Критериев нет. Добавьте перед активацией.",
+      "duplicatePurpose": "Для этой специальности уже есть рубрика с такой целью.",
+      "notDraft": "Редактируется только DRAFT. Сначала клонируйте.",
+      "lockedRefusal": "Версия уже использована в оценке — редактирование запрещено.",
+      "invalidWeights": "Сумма весов должна равняться 10000.",
+      "invalidJson": "Неверный JSON.",
+      "activationFailed": "Не удалось активировать"
+    },
     "orgUnits": {
       "title": "Организационные единицы",
       "subtitle": "Дерево. Новые узлы создаются только внутри родителя.",

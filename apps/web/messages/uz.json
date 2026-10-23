@@ -80,7 +80,132 @@
   "footer": {
     "madeIn": "Toshkent"
   },
+  "comingSoon": {
+    "employees": {
+      "title": "Xodimlar bo'limi tayyorlanmoqda",
+      "detail": "API tayyor (org units + roles + evidence); jadval va profil UI keyingi slice'da keladi. Hozircha sozlamalar orqali xodimlarni yarating."
+    },
+    "candidates": {
+      "title": "Nomzodlar bo'limi tayyorlanmoqda",
+      "detail": "Candidate CRUD + invite tokenlari + public assessment UI — 5-bosqichda."
+    },
+    "assessments": {
+      "title": "Baholashlar bo'limi tayyorlanmoqda",
+      "detail": "Period, evidence, scoring (EX1/EX4/EX6) va review workflow — 4.3+ slice'larida."
+    },
+    "rewards": {
+      "title": "Mukofotlar bo'limi tayyorlanmoqda",
+      "detail": "Policy, byudjet, ranking va approval — 7-bosqichda."
+    }
+  },
   "settings": {
+    "index": {
+      "title": "Sozlamalar",
+      "subtitle": "Tashkiliy sozlamalar — faqat ma'muriy huquqga ega foydalanuvchilar uchun.",
+      "orgUnits": "Tashkiliy birliklar",
+      "orgUnitsNote": "Daraxt — bo'lim/filial strukturasi.",
+      "users": "Foydalanuvchilar",
+      "usersNote": "Hisob yaratish, rol tayinlash, bloklash.",
+      "catalog": "Katalog",
+      "catalogNote": "Specialty, position, competency (lokalizatsiyali nomlar).",
+      "levels": "Kareyra darajalari",
+      "levelsNote": "Daraja ro'yxati, requirements, UNAPPROVED badge.",
+      "salary": "Oylik maosh oralig'lari",
+      "salaryNote": "Position × level × sana oynasi; overlap rad etiladi.",
+      "rubrics": "Baholash rubrikalari",
+      "rubricsNote": "Versiyalar, kriteriya, og'irliklar, clone-on-edit."
+    },
+    "common": {
+      "add": "Qo'shish",
+      "create": "Yaratish",
+      "cancel": "Bekor qilish",
+      "save": "Saqlash",
+      "key": "Kalit",
+      "nameUz": "Nomi (uz)",
+      "nameRu": "Nomi (ru)",
+      "nameEn": "Nomi (en)",
+      "empty": "Hali yozuvlar yo'q.",
+      "disabled": "o'chirilgan",
+      "duplicateKey": "Bu kalit allaqachon mavjud.",
+      "invalidKey": "Kalit: a-z, 0-9, _, -; 63 belgigacha."
+    },
+    "catalog": {
+      "title": "Katalog",
+      "subtitle": "Mutaxassislik, lavozim, kompetensiya — barcha nomlar lokalizatsiya qilinadi (uz majburiy).",
+      "specialties": "Mutaxassisliklar",
+      "positions": "Lavozimlar",
+      "competencies": "Kompetensiyalar",
+      "specialty": "Mutaxassislik",
+      "title_pos": "Lavozim nomi (uz)",
+      "importance": "Muhimligi (1–3)"
+    },
+    "levels": {
+      "title": "Kareyra darajalari",
+      "subtitle": "Darajalar daraxt tartibida. Yangi darajalar oxiriga qo'shiladi, UNAPPROVED badge olib qolinadi.",
+      "rank": "Rank",
+      "status": "Holat",
+      "approve": "Tasdiqlash",
+      "moveUp": "Yuqoriga",
+      "moveDown": "Pastga",
+      "unapproved": "Tasdiqlanmagan"
+    },
+    "salary": {
+      "title": "Oylik maosh oralig'lari",
+      "subtitle": "Position × level × sana oynasi. Overlap rad etiladi.",
+      "position": "Lavozim",
+      "level": "Daraja",
+      "minAmount": "Min (UZS)",
+      "maxAmount": "Max (UZS)",
+      "effectiveFrom": "Boshlanish",
+      "effectiveTo": "Tugash (bo'sh = ochiq)",
+      "overlap": "Bu oyna uchun boshqa band mavjud.",
+      "approve": "Tasdiqlash",
+      "close": "Yopish",
+      "unapproved": "Tasdiqlanmagan"
+    },
+    "rubrics": {
+      "title": "Baholash rubrikalari",
+      "subtitle": "Mutaxassislik × maqsad. Versiyalar: DRAFT → ACTIVE → RETIRED. Faqat DRAFT tahrirlanadi.",
+      "newRubric": "Yangi rubrika",
+      "specialty": "Mutaxassislik",
+      "purpose": "Maqsad",
+      "purposeCandidate": "Nomzod",
+      "purposePerformance": "Faoliyat",
+      "purposeLevelReview": "Daraja ko'rib chiqish",
+      "version": "Versiya",
+      "status": "Holat",
+      "draft": "Qoralama",
+      "active": "Faol",
+      "retired": "Nafaqada",
+      "locked": "Qulflangan",
+      "weightTotal": "Vaznlar jami",
+      "weightTarget": "Jami 10000 bo'lishi kerak",
+      "activate": "Faollashtirish",
+      "clone": "Klonlash",
+      "addCriterion": "Mezon qo'shish",
+      "criterion": "Mezon",
+      "weightBp": "Vazn (bp, 0–10000)",
+      "method": "Usul",
+      "methodAutoQuiz": "Avto-test",
+      "methodManual": "Qo'lda",
+      "methodEvidenceMetric": "Dalil metrikasi",
+      "isGate": "Gate",
+      "gateMinScore": "Min ball",
+      "evidenceRequired": "Dalil majburiy",
+      "minEvidenceCount": "Min dalil soni",
+      "sortOrder": "Tartib",
+      "metricConfig": "Metrika konfig (JSON)",
+      "description": "Tavsif (uz)",
+      "noRubrics": "Rubrikalar yo'q. Birinchisini yarating.",
+      "noVersions": "Versiyalar yo'q.",
+      "noCriteria": "Mezonlar yo'q. Faollashtirishdan oldin qo'shing.",
+      "duplicatePurpose": "Bu mutaxassislik uchun bu maqsadda rubrika mavjud.",
+      "notDraft": "Faqat DRAFT versiyalar tahrirlanadi. Avval klon oling.",
+      "lockedRefusal": "Versiya baholash tomonidan ishlatilgan — tahrirlab bo'lmaydi.",
+      "invalidWeights": "Vaznlar yig'indisi 10000 bo'lishi kerak.",
+      "invalidJson": "JSON noto'g'ri yozilgan.",
+      "activationFailed": "Faollashtirib bo'lmadi"
+    },
     "orgUnits": {
       "title": "Tashkiliy birliklar",
       "subtitle": "Daraxt. Yangi tugunlar faqat ota tugun ichida yaratiladi.",

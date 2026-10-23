@@ -169,7 +169,7 @@ function UserRowView({
           className={
             user.status === "ACTIVE"
               ? "inline-flex items-center gap-1.5 rounded-full bg-good-soft text-good px-2 py-0.5 text-xs"
-              : "inline-flex items-center gap-1.5 rounded-full bg-wait text-fg-muted px-2 py-0.5 text-xs"
+              : "inline-flex items-center gap-1.5 rounded-full bg-surface-sunken text-fg-muted px-2 py-0.5 text-xs"
           }
         >
           <span

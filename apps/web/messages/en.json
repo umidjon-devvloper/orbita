@@ -80,7 +80,132 @@
   "footer": {
     "madeIn": "Tashkent"
   },
+  "comingSoon": {
+    "employees": {
+      "title": "Employees — UI in progress",
+      "detail": "The API is ready (org units + roles + evidence); the table and profile land in the next slice."
+    },
+    "candidates": {
+      "title": "Candidates — UI in progress",
+      "detail": "Candidate CRUD + invite tokens + public assessment UI — in Phase 5."
+    },
+    "assessments": {
+      "title": "Assessments — UI in progress",
+      "detail": "Periods, evidence, scoring (EX1/EX4/EX6) and review workflow — in slices 4.3+."
+    },
+    "rewards": {
+      "title": "Rewards — UI in progress",
+      "detail": "Policies, budget, ranking and approval — in Phase 7."
+    }
+  },
   "settings": {
+    "index": {
+      "title": "Settings",
+      "subtitle": "Organization-wide settings — admin only.",
+      "orgUnits": "Organizational units",
+      "orgUnitsNote": "Tree — department/branch structure.",
+      "users": "Users",
+      "usersNote": "Create accounts, assign roles, disable.",
+      "catalog": "Catalog",
+      "catalogNote": "Specialty, position, competency (localized names).",
+      "levels": "Career levels",
+      "levelsNote": "Level list, requirements, UNAPPROVED badge.",
+      "salary": "Salary bands",
+      "salaryNote": "Position × level × date window; overlaps refused.",
+      "rubrics": "Assessment rubrics",
+      "rubricsNote": "Versions, criteria, weights, clone-on-edit."
+    },
+    "common": {
+      "add": "Add",
+      "create": "Create",
+      "cancel": "Cancel",
+      "save": "Save",
+      "key": "Key",
+      "nameUz": "Name (uz)",
+      "nameRu": "Name (ru)",
+      "nameEn": "Name (en)",
+      "empty": "No records yet.",
+      "disabled": "disabled",
+      "duplicateKey": "This key already exists.",
+      "invalidKey": "Key: a-z, 0-9, _, -; up to 63 chars."
+    },
+    "catalog": {
+      "title": "Catalog",
+      "subtitle": "Specialty, position, competency — every name is localized (uz required).",
+      "specialties": "Specialties",
+      "positions": "Positions",
+      "competencies": "Competencies",
+      "specialty": "Specialty",
+      "title_pos": "Position title (uz)",
+      "importance": "Importance (1–3)"
+    },
+    "levels": {
+      "title": "Career levels",
+      "subtitle": "Levels in rank order. New levels append to the end with the UNAPPROVED badge.",
+      "rank": "Rank",
+      "status": "Status",
+      "approve": "Approve",
+      "moveUp": "Up",
+      "moveDown": "Down",
+      "unapproved": "Unapproved"
+    },
+    "salary": {
+      "title": "Salary bands",
+      "subtitle": "Position × level × date window. Overlaps are refused.",
+      "position": "Position",
+      "level": "Level",
+      "minAmount": "Min (UZS)",
+      "maxAmount": "Max (UZS)",
+      "effectiveFrom": "From",
+      "effectiveTo": "To (empty = open-ended)",
+      "overlap": "Another band already covers this window.",
+      "approve": "Approve",
+      "close": "Close",
+      "unapproved": "Unapproved"
+    },
+    "rubrics": {
+      "title": "Assessment rubrics",
+      "subtitle": "Specialty × purpose. Versions: DRAFT → ACTIVE → RETIRED. Only DRAFT is editable.",
+      "newRubric": "New rubric",
+      "specialty": "Specialty",
+      "purpose": "Purpose",
+      "purposeCandidate": "Candidate",
+      "purposePerformance": "Performance",
+      "purposeLevelReview": "Level review",
+      "version": "Version",
+      "status": "Status",
+      "draft": "Draft",
+      "active": "Active",
+      "retired": "Retired",
+      "locked": "Locked",
+      "weightTotal": "Weights total",
+      "weightTarget": "Must sum to 10000",
+      "activate": "Activate",
+      "clone": "Clone",
+      "addCriterion": "Add criterion",
+      "criterion": "Criterion",
+      "weightBp": "Weight (bp, 0–10000)",
+      "method": "Method",
+      "methodAutoQuiz": "Auto quiz",
+      "methodManual": "Manual",
+      "methodEvidenceMetric": "Evidence metric",
+      "isGate": "Gate",
+      "gateMinScore": "Min score",
+      "evidenceRequired": "Evidence required",
+      "minEvidenceCount": "Min evidence count",
+      "sortOrder": "Order",
+      "metricConfig": "Metric config (JSON)",
+      "description": "Description (uz)",
+      "noRubrics": "No rubrics yet. Create the first one.",
+      "noVersions": "No versions.",
+      "noCriteria": "No criteria yet. Add some before activating.",
+      "duplicatePurpose": "A rubric with this purpose already exists for this specialty.",
+      "notDraft": "Only DRAFT is editable. Clone first.",
+      "lockedRefusal": "This version is already used by an assessment — edits refused.",
+      "invalidWeights": "Weights must sum to 10000.",
+      "invalidJson": "Invalid JSON.",
+      "activationFailed": "Failed to activate"
+    },
     "orgUnits": {
       "title": "Organizational units",
       "subtitle": "Tree. New nodes are created only inside a parent.",
