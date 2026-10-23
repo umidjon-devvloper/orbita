@@ -80,7 +80,41 @@
   "footer": {
     "madeIn": "Toshkent"
   },
+  "comingSoon": {
+    "employees": {
+      "title": "Xodimlar bo'limi tayyorlanmoqda",
+      "detail": "API tayyor (org units + roles + evidence); jadval va profil UI keyingi slice'da keladi. Hozircha sozlamalar orqali xodimlarni yarating."
+    },
+    "candidates": {
+      "title": "Nomzodlar bo'limi tayyorlanmoqda",
+      "detail": "Candidate CRUD + invite tokenlari + public assessment UI — 5-bosqichda."
+    },
+    "assessments": {
+      "title": "Baholashlar bo'limi tayyorlanmoqda",
+      "detail": "Period, evidence, scoring (EX1/EX4/EX6) va review workflow — 4.3+ slice'larida."
+    },
+    "rewards": {
+      "title": "Mukofotlar bo'limi tayyorlanmoqda",
+      "detail": "Policy, byudjet, ranking va approval — 7-bosqichda."
+    }
+  },
   "settings": {
+    "index": {
+      "title": "Sozlamalar",
+      "subtitle": "Tashkiliy sozlamalar — faqat ma'muriy huquqga ega foydalanuvchilar uchun.",
+      "orgUnits": "Tashkiliy birliklar",
+      "orgUnitsNote": "Daraxt — bo'lim/filial strukturasi.",
+      "users": "Foydalanuvchilar",
+      "usersNote": "Hisob yaratish, rol tayinlash, bloklash.",
+      "catalog": "Katalog",
+      "catalogNote": "Specialty, position, competency (lokalizatsiyali nomlar).",
+      "levels": "Kareyra darajalari",
+      "levelsNote": "Daraja ro'yxati, requirements, UNAPPROVED badge.",
+      "salary": "Oylik maosh oralig'lari",
+      "salaryNote": "Position × level × sana oynasi; overlap rad etiladi.",
+      "rubrics": "Baholash rubrikalari",
+      "rubricsNote": "Versiyalar, kriteriya, og'irliklar, clone-on-edit."
+    },
     "orgUnits": {
       "title": "Tashkiliy birliklar",
       "subtitle": "Daraxt. Yangi tugunlar faqat ota tugun ichida yaratiladi.",

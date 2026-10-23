@@ -80,7 +80,41 @@
   "footer": {
     "madeIn": "Tashkent"
   },
+  "comingSoon": {
+    "employees": {
+      "title": "Employees — UI in progress",
+      "detail": "The API is ready (org units + roles + evidence); the table and profile land in the next slice."
+    },
+    "candidates": {
+      "title": "Candidates — UI in progress",
+      "detail": "Candidate CRUD + invite tokens + public assessment UI — in Phase 5."
+    },
+    "assessments": {
+      "title": "Assessments — UI in progress",
+      "detail": "Periods, evidence, scoring (EX1/EX4/EX6) and review workflow — in slices 4.3+."
+    },
+    "rewards": {
+      "title": "Rewards — UI in progress",
+      "detail": "Policies, budget, ranking and approval — in Phase 7."
+    }
+  },
   "settings": {
+    "index": {
+      "title": "Settings",
+      "subtitle": "Organization-wide settings — admin only.",
+      "orgUnits": "Organizational units",
+      "orgUnitsNote": "Tree — department/branch structure.",
+      "users": "Users",
+      "usersNote": "Create accounts, assign roles, disable.",
+      "catalog": "Catalog",
+      "catalogNote": "Specialty, position, competency (localized names).",
+      "levels": "Career levels",
+      "levelsNote": "Level list, requirements, UNAPPROVED badge.",
+      "salary": "Salary bands",
+      "salaryNote": "Position × level × date window; overlaps refused.",
+      "rubrics": "Assessment rubrics",
+      "rubricsNote": "Versions, criteria, weights, clone-on-edit."
+    },
     "orgUnits": {
       "title": "Organizational units",
       "subtitle": "Tree. New nodes are created only inside a parent.",

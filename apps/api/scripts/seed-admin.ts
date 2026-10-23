@@ -66,10 +66,7 @@ async function main() {
 }
 
 /** Prisma upsert needs a where unique; we don't have (orgName) unique, so fall back to the org row's id if any. */
-async function resolveOrgId(
-  prisma: ReturnType<typeof createPrisma>,
-  name: string,
-): Promise<string> {
+async function resolveOrgId(prisma: ReturnType<typeof createPrisma>, name: string): Promise<string> {
   const existing = await prisma.organization.findFirst({ where: { name }, select: { id: true } });
   return existing?.id ?? "00000000-0000-0000-0000-000000000000";
 }
